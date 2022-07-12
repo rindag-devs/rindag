@@ -1,0 +1,53 @@
+log_level: debug
+database:
+  host: localhost
+  port: 3306
+  user: root
+  password: root
+  database: rindag
+storage:
+  minio:
+    endpoint: localhost:9000
+    access_key_id: minio
+    secret_access_key: minio123
+    use_ssl: true
+    bucket: rindag
+judges:
+  local1:
+    host: localhost:5051
+    token: ""
+compile:
+  cmd: ["/usr/local/bin/g++", "-std=c++17", "-O2"]
+testlib:
+  path: /usr/local/include/testlib.h
+validator:
+  compile:
+    args: []
+    time_limit: 10000000000
+    memory_limit: 256000000
+    stderr_limit: 1024
+  run:
+    time_limit: 10000000000
+    memory_limit: 256000000
+    stderr_limit: 1024
+checker:
+  builtin_path: "/var/lib/rindag/checkers"
+  compile:
+    args: []
+    time_limit: 10000000000
+    memory_limit: 256000000
+    stderr_limit: 1024
+  run:
+    time_limit: 10000000000
+    memory_limit: 256000000
+    stderr_limit: 1024
+generator:
+  compile:
+    args: []
+    time_limit: 10000000000
+    memory_limit: 256000000
+    stderr_limit: 1024
+  run:
+    time_limit: 10000000000
+    memory_limit: 256000000
+    stderr_limit: 1024
