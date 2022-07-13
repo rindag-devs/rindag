@@ -15,12 +15,11 @@ const (
 // DefaultEnv is the default environment variables.
 var DefaultEnv = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/tmp"}
 
-// SuccessCallback is the callback function when a task is finished.
+// CallbackFunction is the callback function when a task is finished.
+// If the task is successful, the callback function will be called with the result.
+// If the task is failed, the callback function will be called with the error.
 // Return true to continue, false to stop.
-type SuccessCallback func(*pb.Response_Result) bool
-
-// FailureCallback is the callback function when a task is failed.
-type FailureCallback func(error)
+type CallbackFunction func(*pb.Response_Result, error) bool
 
 // Task is the task to be judged.
 // All the fields are required and should not be nil.
@@ -62,11 +61,8 @@ type Task struct {
 	// CopyOut is the files to be copied out.
 	CopyOut []string
 
-	// SuccessCallback is the callback function when a task is finished.
-	SuccessCallback SuccessCallback
-
-	// FailureCallback is the callback function when a task is failed.
-	FailureCallback FailureCallback
+	// Callback is the callback function when a task is finished.
+	Callback CallbackFunction
 }
 
 // DefaultTask returns a default (empty) task.
@@ -84,10 +80,8 @@ func DefaultTask() *Task {
 		CopyIn:       map[string]*pb.Request_File{},
 		CopyInCached: map[string]*string{},
 		CopyOut:      []string{},
-		SuccessCallback: func(result *pb.Response_Result) bool {
+		Callback: func(*pb.Response_Result, error) bool {
 			return true
-		},
-		FailureCallback: func(err error) {
 		},
 	}
 }
@@ -167,15 +161,9 @@ func (t *Task) WithCopyOut(paths ...string) *Task {
 	return t
 }
 
-// WithSuccessCallback sets the callback function when a task is finished.
-func (t *Task) WithSuccessCallback(callback SuccessCallback) *Task {
-	t.SuccessCallback = callback
-	return t
-}
-
-// WithFailureCallback sets the callback function when a task is failed.
-func (t *Task) WithFailureCallback(callback FailureCallback) *Task {
-	t.FailureCallback = callback
+// WithCallback sets the callback function when a task is finished.
+func (t *Task) WithCallback(callback CallbackFunction) *Task {
+	t.Callback = callback
 	return t
 }
 

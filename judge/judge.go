@@ -55,13 +55,13 @@ func (j *Judge) processSingleTask(
 		default:
 			parentCancel()
 			log.WithField("task", task.ID).WithError(err).Error("Failed to execute")
-			task.FailureCallback(err)
+			task.Callback(nil, err)
 		}
 		return
 	}
 	// Executed successfully
 	log.WithField("task", task.ID).Debug("Executed successfully")
-	if !task.SuccessCallback(result.Results[0]) {
+	if !task.Callback(result.Results[0], nil) {
 		log.WithField("task", task.ID).Info("Aborted")
 		parentCancel()
 	}

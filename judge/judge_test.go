@@ -28,7 +28,12 @@ func TestEcho(t *testing.T) {
 	wg.Add(1)
 	helloTask := DefaultTask().
 		WithCmd("/bin/bash", "-c", "echo -n Hello, World!").
-		WithSuccessCallback(func(r *pb.Response_Result) bool {
+		WithCallback(func(r *pb.Response_Result, err error) bool {
+			if err != nil {
+				t.Log("failure callback")
+				t.Error(err)
+				wg.Done()
+			}
 			if r.Status != pb.Response_Result_Accepted {
 				t.Logf("Status: %s", r.Status)
 				t.Error(string(r.Files["stderr"]))
@@ -49,13 +54,7 @@ func TestEcho(t *testing.T) {
 			}
 			wg.Done()
 			return true
-		}).WithFailureCallback(
-		func(err error) {
-			t.Log("failure callback")
-			t.Error(err)
-			wg.Done()
-		},
-	)
+		})
 	judge.AddRequest(NewRequest(context.TODO()).Execute(helloTask))
 	wg.Wait()
 }
@@ -88,7 +87,12 @@ func TestAPlusB(t *testing.T) {
 		WithTimeLimit(10*1000*1000*1000). // Compile time limit 10 s.
 		WithCopyIn("sol.c", sol).
 		WithCopyOut("sol").
-		WithSuccessCallback(func(r *pb.Response_Result) bool {
+		WithCallback(func(r *pb.Response_Result, err error) bool {
+			if err != nil {
+				t.Log("compile task failure callback")
+				t.Error(err)
+				wg.Done()
+			}
 			t.Log("compile success callback")
 			if r.Status != pb.Response_Result_Accepted {
 				t.Logf("compile failed: %s", r.Status)
@@ -104,19 +108,18 @@ func TestAPlusB(t *testing.T) {
 			}
 			t.Logf("solBinID: %s", solBinID)
 			return true
-		}).WithFailureCallback(
-		func(err error) {
-			t.Log("compile task failure callback")
-			t.Error(err)
-			wg.Done()
-		},
-	)
+		})
 	runTask := DefaultTask().
 		WithCmd("sol").
 		WithTimeLimit(1*1000*1000*1000). // Run time limit 1 s.
 		WithStdin(inf).
 		WithCopyInCached("sol", &solBinID).
-		WithSuccessCallback(func(r *pb.Response_Result) bool {
+		WithCallback(func(r *pb.Response_Result, err error) bool {
+			if err != nil {
+				t.Log("run task failure callback")
+				t.Error(err)
+				wg.Done()
+			}
 			t.Logf("solBinID in run task: %s", solBinID)
 			if r.Status != pb.Response_Result_Accepted {
 				t.Logf("run failed: %s", r.Status)
@@ -139,13 +142,7 @@ func TestAPlusB(t *testing.T) {
 			}
 			wg.Done()
 			return true
-		}).WithFailureCallback(
-		func(err error) {
-			t.Log("run task failure callback")
-			t.Error(err)
-			wg.Done()
-		},
-	)
+		})
 	judge.AddRequest(NewRequest(context.TODO()).Execute(compileTask).Then(runTask))
 	wg.Wait()
 }
