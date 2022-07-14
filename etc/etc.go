@@ -25,7 +25,10 @@ type Configuration struct {
 	} `yaml:"judges"`
 
 	Compile struct {
-		Cmd []string `yaml:"cmd"`
+		Cmd         []string `yaml:"cmd"`
+		TimeLimit   uint64   `yaml:"time_limit"`
+		MemoryLimit uint64   `yaml:"memory_limit"`
+		StderrLimit int64    `yaml:"stderr_limit"`
 	} `yaml:"compile"`
 
 	Testlib struct {
@@ -34,10 +37,7 @@ type Configuration struct {
 
 	Validator struct {
 		Compile struct {
-			Cmd         []string `yaml:"cmd"`
-			TimeLimit   uint64   `yaml:"time_limit"`
-			MemoryLimit uint64   `yaml:"memory_limit"`
-			StderrLimit int64    `yaml:"stderr_limit"`
+			Cmd []string `yaml:"cmd"`
 		} `yaml:"compile"`
 
 		Run struct {
@@ -50,10 +50,7 @@ type Configuration struct {
 	Checker struct {
 		BuiltinPath string `yaml:"builtin_path"`
 		Compile     struct {
-			Cmd         []string `yaml:"cmd"`
-			TimeLimit   uint64   `yaml:"time_limit"`
-			MemoryLimit uint64   `yaml:"memory_limit"`
-			StderrLimit int64    `yaml:"stderr_limit"`
+			Cmd []string `yaml:"cmd"`
 		} `yaml:"compile"`
 
 		Run struct {
@@ -65,10 +62,7 @@ type Configuration struct {
 
 	Generator struct {
 		Compile struct {
-			Cmd         []string `yaml:"cmd"`
-			TimeLimit   uint64   `yaml:"time_limit"`
-			MemoryLimit uint64   `yaml:"memory_limit"`
-			StderrLimit int64    `yaml:"stderr_limit"`
+			Cmd []string `yaml:"cmd"`
 		} `yaml:"compile"`
 
 		Run struct {

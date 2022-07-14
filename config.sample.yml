@@ -18,14 +18,14 @@ judges:
     token: ""
 compile:
   cmd: ["/usr/local/bin/g++", "-std=c++17", "-O2"]
+  time_limit: 10000000000
+  memory_limit: 256000000
+  stderr_limit: 1024
 testlib:
   path: /usr/local/include/testlib.h
 validator:
   compile:
     args: []
-    time_limit: 10000000000
-    memory_limit: 256000000
-    stderr_limit: 1024
   run:
     time_limit: 10000000000
     memory_limit: 256000000
@@ -34,9 +34,6 @@ checker:
   builtin_path: "/var/lib/rindag/checkers"
   compile:
     args: []
-    time_limit: 10000000000
-    memory_limit: 256000000
-    stderr_limit: 1024
   run:
     time_limit: 10000000000
     memory_limit: 256000000
@@ -44,9 +41,6 @@ checker:
 generator:
   compile:
     args: []
-    time_limit: 10000000000
-    memory_limit: 256000000
-    stderr_limit: 1024
   run:
     time_limit: 10000000000
     memory_limit: 256000000
