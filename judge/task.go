@@ -91,9 +91,9 @@ func DefaultTask() *Task {
 	}
 }
 
-// WithCmd sets the command to be executed.
+// WithCmd appends the command to be executed.
 func (t *Task) WithCmd(cmd ...string) *Task {
-	t.Cmd = cmd
+	t.Cmd = append(t.Cmd, cmd...)
 	return t
 }
 
