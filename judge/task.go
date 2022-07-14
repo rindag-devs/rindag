@@ -49,7 +49,11 @@ type Task struct {
 	// Stdin is the input data.
 	Stdin *pb.Request_File
 
+	// StdinCached is the input data which is cached.
+	StdinCached *string
+
 	// CopyIn is the files to be copied in.
+	// If both Stdin and StdinCached is given, StdinCached will be used.
 	CopyIn map[string]*pb.Request_File
 
 	// CopyInCached is the files to be copied in from the cache.
@@ -77,6 +81,7 @@ func DefaultTask() *Task {
 		Env:         DefaultEnv,
 		Stdin: &pb.Request_File{
 			File: &pb.Request_File_Memory{Memory: &pb.Request_MemoryFile{Content: []byte{}}}},
+		StdinCached:  nil,
 		CopyIn:       map[string]*pb.Request_File{},
 		CopyInCached: map[string]*string{},
 		CopyOut:      []string{},
@@ -124,9 +129,8 @@ func (t *Task) WithStdin(stdin []byte) *Task {
 }
 
 // WithStdinCached sets the input data to be cached.
-func (t *Task) WithStdinCached(fileID string) *Task {
-	t.Stdin = &pb.Request_File{
-		File: &pb.Request_File_Cached{Cached: &pb.Request_CachedFile{FileID: fileID}}}
+func (t *Task) WithStdinCached(fileID *string) *Task {
+	t.StdinCached = fileID
 	return t
 }
 
@@ -169,6 +173,11 @@ func (t *Task) WithCallback(callback CallbackFunction) *Task {
 
 // ToPbRequest converts the task to a protobuf request.
 func (t *Task) ToPbRequest() *pb.Request {
+	stdin := t.Stdin
+	if t.StdinCached != nil {
+		stdin = &pb.Request_File{
+			File: &pb.Request_File_Cached{Cached: &pb.Request_CachedFile{FileID: *t.StdinCached}}}
+	}
 	appendedCopyOut := make([]*pb.Request_CmdCopyOutFile, len(t.CopyOut))
 	for i, f := range t.CopyOut {
 		appendedCopyOut[i] = &pb.Request_CmdCopyOutFile{
@@ -194,7 +203,7 @@ func (t *Task) ToPbRequest() *pb.Request {
 				Args: t.Cmd,
 				Env:  t.Env,
 				Files: []*pb.Request_File{
-					t.Stdin,
+					stdin,
 					{
 						File: &pb.Request_File_Pipe{
 							Pipe: &pb.Request_PipeCollector{
