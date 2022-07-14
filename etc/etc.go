@@ -37,7 +37,7 @@ type Configuration struct {
 
 	Validator struct {
 		Compile struct {
-			Cmd []string `yaml:"cmd"`
+			Args []string `yaml:"args"`
 		} `yaml:"compile"`
 
 		Run struct {
@@ -50,7 +50,7 @@ type Configuration struct {
 	Checker struct {
 		BuiltinPath string `yaml:"builtin_path"`
 		Compile     struct {
-			Cmd []string `yaml:"cmd"`
+			Args []string `yaml:"args"`
 		} `yaml:"compile"`
 
 		Run struct {
@@ -62,7 +62,7 @@ type Configuration struct {
 
 	Generator struct {
 		Compile struct {
-			Cmd []string `yaml:"cmd"`
+			Args []string `yaml:"args"`
 		} `yaml:"compile"`
 
 		Run struct {
