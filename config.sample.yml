@@ -17,7 +17,7 @@ judges:
     host: localhost:5051
     token: ""
 compile:
-  cmd: ["/usr/local/bin/g++", "-std=c++17", "-O2"]
+  cmd: ["/usr/bin/g++", "-std=c++17", "-O2"]
   time_limit: 10000000000
   memory_limit: 256000000
   stderr_limit: 1024
