@@ -144,33 +144,41 @@ func GetIdleJudge() (*Judge, error) {
 	return idleJudge, nil
 }
 
+func AddAndStart(id string, host string, token string) error {
+	if _, ok := judges[id]; ok {
+		return errors.New("judge already exists")
+	}
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(
+			grpc_prometheus.UnaryClientInterceptor,
+			grpc_logrus.UnaryClientInterceptor(log.NewEntry(log.StandardLogger())),
+		)),
+		grpc.WithStreamInterceptor(
+			grpc_middleware.ChainStreamClient(
+				grpc_prometheus.StreamClientInterceptor,
+				grpc_logrus.StreamClientInterceptor(log.NewEntry(log.StandardLogger())),
+			)),
+	}
+	if token != "" {
+		opts = append(opts, grpc.WithPerRPCCredentials(tokenAuth(token)))
+	}
+	conn, err := grpc.Dial(host, opts...)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to dial")
+	}
+	execClient := pb.NewExecutorClient(conn)
+	j := newJudge(execClient)
+	j.start()
+	judges[id] = j
+	return nil
+}
+
 func init() {
 	// Initialize judges from config
 	for id, c := range etc.Config.Judges {
 		log.WithField("id", id).Debug("Initializing judge")
-		opts := []grpc.DialOption{
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(
-				grpc_prometheus.UnaryClientInterceptor,
-				grpc_logrus.UnaryClientInterceptor(log.NewEntry(log.StandardLogger())),
-			)),
-			grpc.WithStreamInterceptor(
-				grpc_middleware.ChainStreamClient(
-					grpc_prometheus.StreamClientInterceptor,
-					grpc_logrus.StreamClientInterceptor(log.NewEntry(log.StandardLogger())),
-				)),
-		}
-		if c.Token != "" {
-			opts = append(opts, grpc.WithPerRPCCredentials(tokenAuth(c.Token)))
-		}
-		client, err := grpc.Dial(c.Host, opts...)
-		if err != nil {
-			log.WithError(err).Fatal("Failed to dial")
-		}
-		execClient := pb.NewExecutorClient(client)
-		j := newJudge(execClient)
-		j.start()
-		judges[id] = j
+		AddAndStart(id, c.Host, c.Token)
 	}
 }
 
