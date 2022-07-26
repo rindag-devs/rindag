@@ -1,121 +1,96 @@
 package etc
 
 import (
-	"os"
-
 	log "github.com/sirupsen/logrus"
-
-	"gopkg.in/yaml.v3"
+	"github.com/spf13/viper"
 )
 
 var (
-	// Paths to the config file and the fallback config files.
-	Paths = []string{"config.yml", "/etc/rindag.yml"}
 	// Config is the global configuration
 	Config *Configuration
 )
 
 // Configuration is the Configuration structure.
 type Configuration struct {
-	LogLevel string `yaml:"log_level"`
+	LogLevel string `mapstructure:"log_level"`
 
 	Judges map[string]struct {
-		Host  string `yaml:"host"`
-		Token string `yaml:"token"`
-	} `yaml:"judges"`
+		Host  string `mapstructure:"host"`
+		Token string `mapstructure:"token"`
+	} `mapstructure:"judges"`
 
 	Compile struct {
-		Cmd         []string `yaml:"cmd"`
-		TimeLimit   uint64   `yaml:"time_limit"`
-		MemoryLimit uint64   `yaml:"memory_limit"`
-		StderrLimit int64    `yaml:"stderr_limit"`
-	} `yaml:"compile"`
+		Cmd         []string `mapstructure:"cmd"`
+		TimeLimit   uint64   `mapstructure:"time_limit"`
+		MemoryLimit uint64   `mapstructure:"memory_limit"`
+		StderrLimit int64    `mapstructure:"stderr_limit"`
+	} `mapstructure:"compile"`
 
 	Testlib struct {
-		Path string `yaml:"path"`
-	} `yaml:"testlib"`
+		Path string `mapstructure:"path"`
+	} `mapstructure:"testlib"`
 
 	Validator struct {
 		Compile struct {
-			Args []string `yaml:"args"`
-		} `yaml:"compile"`
+			Args []string `mapstructure:"args"`
+		} `mapstructure:"compile"`
 
 		Run struct {
-			TimeLimit   uint64 `yaml:"time_limit"`
-			MemoryLimit uint64 `yaml:"memory_limit"`
-			StderrLimit int64  `yaml:"stderr_limit"`
-		} `yaml:"run"`
-	} `yaml:"validator"`
+			TimeLimit   uint64 `mapstructure:"time_limit"`
+			MemoryLimit uint64 `mapstructure:"memory_limit"`
+			StderrLimit int64  `mapstructure:"stderr_limit"`
+		} `mapstructure:"run"`
+	} `mapstructure:"validator"`
 
 	Checker struct {
-		BuiltinPath string `yaml:"builtin_path"`
+		BuiltinPath string `mapstructure:"builtin_path"`
 		Compile     struct {
-			Args []string `yaml:"args"`
-		} `yaml:"compile"`
+			Args []string `mapstructure:"args"`
+		} `mapstructure:"compile"`
 
 		Run struct {
-			TimeLimit   uint64 `yaml:"time_limit"`
-			MemoryLimit uint64 `yaml:"memory_limit"`
-			StderrLimit int64  `yaml:"stderr_limit"`
-		} `yaml:"run"`
-	} `yaml:"checker"`
+			TimeLimit   uint64 `mapstructure:"time_limit"`
+			MemoryLimit uint64 `mapstructure:"memory_limit"`
+			StderrLimit int64  `mapstructure:"stderr_limit"`
+		} `mapstructure:"run"`
+	} `mapstructure:"checker"`
 
 	Generator struct {
 		Compile struct {
-			Args []string `yaml:"args"`
-		} `yaml:"compile"`
+			Args []string `mapstructure:"args"`
+		} `mapstructure:"compile"`
 
 		Run struct {
-			TimeLimit   uint64 `yaml:"time_limit"`
-			MemoryLimit uint64 `yaml:"memory_limit"`
-			StderrLimit int64  `yaml:"stderr_limit"`
-		} `yaml:"run"`
-	} `yaml:"generator"`
+			TimeLimit   uint64 `mapstructure:"time_limit"`
+			MemoryLimit uint64 `mapstructure:"memory_limit"`
+			StderrLimit int64  `mapstructure:"stderr_limit"`
+		} `mapstructure:"run"`
+	} `mapstructure:"generator"`
 
 	Database struct {
-		Host     string `yaml:"host"`
-		Port     int    `yaml:"port"`
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-		Database string `yaml:"database"`
-	} `yaml:"database"`
+		Host     string `mapstructure:"host"`
+		Port     int    `mapstructure:"port"`
+		User     string `mapstructure:"user"`
+		Password string `mapstructure:"password"`
+		DBName   string `mapstructure:"dbname"`
+		UseSSL   bool   `mapstructure:"use_ssl"`
+	} `mapstructure:"database"`
 
 	Storage struct {
-		// type of storage (local or minio).
-		Type  string `yaml:"type"`
+		// Type is the type of storage (local or minio).
+		Type  string `mapstructure:"type"`
 		Local struct {
-			// path to the storage directory (like /var/lib/rindag/storage).
-			Path string `yaml:"path"`
-		} `yaml:"local"`
+			// Path is the path to the storage directory.
+			Path string `mapstructure:"path"`
+		} `mapstructure:"local"`
 		MinIO struct {
-			Endpoint        string `yaml:"endpoint"`
-			AccessKeyID     string `yaml:"access_key_id"`
-			SecretAccessKey string `yaml:"secret_access_key"`
-			UseSSL          bool   `yaml:"use_ssl"`
-			Bucket          string `yaml:"bucket"`
-		} `yaml:"minio"`
-	} `yaml:"storage"`
-}
-
-// LoadConfig loads the configuration from the given file.
-func LoadConfig(file string) interface{} {
-	f, err := os.Open(file)
-	if err != nil {
-		log.WithError(err).WithField("file", file).Fatal("failed to open config file")
-	}
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			log.WithError(err).Error("Failed to close config file")
-		}
-	}(f)
-	decoder := yaml.NewDecoder(f)
-	config := Configuration{}
-	err = decoder.Decode(&config)
-	if err != nil {
-		log.WithError(err).Fatal("Failed to decode config file")
-	}
-	return &config
+			Endpoint        string `mapstructure:"endpoint"`
+			AccessKeyID     string `mapstructure:"access_key_id"`
+			SecretAccessKey string `mapstructure:"secret_access_key"`
+			UseSSL          bool   `mapstructure:"use_ssl"`
+			Bucket          string `mapstructure:"bucket"`
+		} `mapstructure:"minio"`
+	} `mapstructure:"storage"`
 }
 
 func setLogLevel(level string) {
@@ -138,19 +113,16 @@ func setLogLevel(level string) {
 }
 
 func init() {
-	// Load global configuration.
-	for _, file := range Paths {
-		if _, err := os.Stat(file); err != nil {
-			continue
-		}
-		log.Info("Loading config file: ", file)
-		Config = LoadConfig(file).(*Configuration)
+	viper.SetConfigName("config")
+	viper.AddConfigPath("/etc/rindag/")
+	viper.AddConfigPath(".")
+	viper.AutomaticEnv()
+	if err := viper.ReadInConfig(); err != nil {
+		log.WithError(err).Fatal("Failed to read config")
 	}
-	if Config == nil {
-		log.Fatal("No config file found")
+	if err := viper.UnmarshalExact(&Config); err != nil {
+		log.Fatal(err)
 	}
-	// Set log level.
 	setLogLevel(Config.LogLevel)
-
 	log.Info("Loaded config")
 }
