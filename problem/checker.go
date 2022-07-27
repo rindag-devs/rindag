@@ -2,9 +2,8 @@ package problem
 
 import (
 	"bytes"
+	"embed"
 	"io"
-	"os"
-	"path"
 	"rindag/etc"
 	"rindag/judge"
 
@@ -22,18 +21,22 @@ type builtinCheckerSource struct {
 	Name string
 }
 
+//go:embed third_party/testlib/checkers/*
+var builtinCheckersFS embed.FS
+
 // NewBuiltinChecker creates a checker from the builtin checkers.
 // Available builtin checkers:
 //   - "wcmp" : Compare sequences of tokens (default).
 //   - "lcmp" : Compare files as sequence of tokens in lines.
 //   - "yesno" : Compare one token "YES" or "NO" (case insensitive).
 //   - "nyesno" : Like "yesno", but multiple tokens are allowed.
+//   - Other checkers in "third_party/testlib/checkers/".
 func NewBuiltinChecker(name string) *Checker {
 	return &Checker{source: builtinCheckerSource{Name: name}, binaryID: new(string)}
 }
 
 func (s builtinCheckerSource) ReadCloser() (io.ReadCloser, error) {
-	return os.Open(path.Join(etc.Config.Checker.BuiltinPath, s.Name))
+	return builtinCheckersFS.Open(s.Name)
 }
 
 type problemCheckerSource struct {
@@ -87,7 +90,7 @@ func (c *Checker) CompileTask(cb judge.CallbackFunction) (*judge.Task, error) {
 		WithMemoryLimit(conf.Compile.MemoryLimit).
 		WithStderrLimit(conf.Compile.StderrLimit).
 		WithCopyIn("checker.cpp", code).
-		WithCopyInFile("testlib.h", TestlibFile).
+		WithCopyIn("testlib.h", TestlibSource).
 		WithCopyOut("checker").
 		WithCallback(func(r *pb.Response_Result, err error) bool {
 			if finished := err == nil && r.Status == pb.Response_Result_Accepted; finished {

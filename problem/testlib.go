@@ -1,20 +1,17 @@
 package problem
 
 import (
-	"os"
+	_ "embed"
 	"regexp"
-	"rindag/etc"
 	"strconv"
 
 	"github.com/criyle/go-judge/pb"
-	log "github.com/sirupsen/logrus"
 )
 
 const MaxTestlibMessageLen = 1024
 
-var (
-	TestlibFile *pb.Request_File
-)
+//go:embed third_party/testlib/testlib.h
+var TestlibSource []byte
 
 func ParseTestlibOutput(output string, fullScore int64) (
 	pb.Response_Result_StatusType, int64, string) {
@@ -90,15 +87,4 @@ func ParseTestlibOutput(output string, fullScore int64) (
 		}
 	}
 	return status, score, builder(message)
-}
-
-func init() {
-	// Read testlib code from config
-	path := etc.Config.Testlib.Path
-	if _, err := os.Stat(etc.Config.Testlib.Path); err != nil {
-		log.WithError(err).Fatal("Failed to read testlib code")
-	}
-	TestlibFile = &pb.Request_File{
-		File: &pb.Request_File_Local{Local: &pb.Request_LocalFile{Src: path}}}
-	log.Info("Read testlib code")
 }

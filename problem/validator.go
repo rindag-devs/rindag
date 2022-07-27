@@ -69,7 +69,7 @@ func (v *Validator) CompileTask(cb judge.CallbackFunction) (*judge.Task, error) 
 		WithMemoryLimit(conf.Compile.MemoryLimit).
 		WithStderrLimit(conf.Compile.StderrLimit).
 		WithCopyIn("validator.cpp", bytes).
-		WithCopyInFile("testlib.h", TestlibFile).
+		WithCopyIn("testlib.h", TestlibSource).
 		WithCopyOut("validator").
 		WithCallback(func(r *pb.Response_Result, err error) bool {
 			if finished := err == nil && r.Status == pb.Response_Result_Accepted; finished {

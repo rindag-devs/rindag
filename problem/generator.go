@@ -68,7 +68,7 @@ func (g *Generator) CompileTask(cb judge.CallbackFunction) (*judge.Task, error) 
 		WithMemoryLimit(conf.Compile.MemoryLimit).
 		WithStderrLimit(conf.Compile.StderrLimit).
 		WithCopyIn("generator.cpp", bytes).
-		WithCopyInFile("testlib.h", TestlibFile).
+		WithCopyIn("testlib.h", TestlibSource).
 		WithCopyOut("generator").
 		WithCallback(func(r *pb.Response_Result, err error) bool {
 			if finished := err == nil && r.Status == pb.Response_Result_Accepted; finished {

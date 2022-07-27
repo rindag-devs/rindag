@@ -208,6 +208,8 @@ func TestJudgeAPlusB(t *testing.T) {
 	validatorCompileTask, err := validator.CompileTask(func(r *pb.Response_Result, err error) bool {
 		if finished := err == nil && r.Status == pb.Response_Result_Accepted; !finished {
 			t.Error("validator compile task not finished")
+			t.Log(r.Status)
+			t.Log(r.Error)
 			result <- false
 			return false
 		}
@@ -242,6 +244,8 @@ func TestJudgeAPlusB(t *testing.T) {
 		WithCallback(func(r *pb.Response_Result, err error) bool {
 			if finished := err == nil && r.Status == pb.Response_Result_Accepted; !finished {
 				t.Error("solution compile task not finished")
+				t.Log(r.Status)
+				t.Log(string(r.Files["stderr"]))
 				result <- false
 				return false
 			}
