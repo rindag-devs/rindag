@@ -44,6 +44,3 @@ fabric.properties
 
 # binary files
 rindag
-executorserver*
-
-config.yml

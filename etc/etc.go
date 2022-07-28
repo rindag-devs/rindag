@@ -1,14 +1,18 @@
 package etc
 
 import (
+	"bytes"
+	_ "embed"
+
+	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
-var (
-	// Config is the global configuration
-	Config *Configuration
-)
+var Config *Configuration
+
+//go:embed config.sample.yaml
+var DefaultConfig []byte
 
 // Configuration is the Configuration structure.
 type Configuration struct {
@@ -26,10 +30,6 @@ type Configuration struct {
 		StderrLimit int64    `mapstructure:"stderr_limit"`
 	} `mapstructure:"compile"`
 
-	Testlib struct {
-		Path string `mapstructure:"path"`
-	} `mapstructure:"testlib"`
-
 	Validator struct {
 		Compile struct {
 			Args []string `mapstructure:"args"`
@@ -43,8 +43,7 @@ type Configuration struct {
 	} `mapstructure:"validator"`
 
 	Checker struct {
-		BuiltinPath string `mapstructure:"builtin_path"`
-		Compile     struct {
+		Compile struct {
 			Args []string `mapstructure:"args"`
 		} `mapstructure:"compile"`
 
@@ -114,13 +113,21 @@ func setLogLevel(level string) {
 
 func init() {
 	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath("/etc/rindag/")
 	viper.AddConfigPath(".")
+	viper.SetEnvPrefix("rindag")
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
-		log.WithError(err).Fatal("Failed to read config")
+		log.WithError(err).Info("Failed to read config, use default config")
+		if err := viper.ReadConfig(bytes.NewReader(DefaultConfig)); err != nil {
+			log.WithError(err).Fatal("Failed to read default config")
+		}
 	}
-	if err := viper.UnmarshalExact(&Config); err != nil {
+	if err := viper.UnmarshalExact(&Config, func(dc *mapstructure.DecoderConfig) {
+		dc.ErrorUnused = true
+		dc.ZeroFields = true
+	}); err != nil {
 		log.Fatal(err)
 	}
 	setLogLevel(Config.LogLevel)
