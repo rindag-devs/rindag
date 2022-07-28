@@ -8,6 +8,7 @@ import (
 const (
 	DefaultTimeLimit   = 5 * 1000 * 1000 * 1000 // 5 second
 	DefaultMemoryLimit = 256 * 1024 * 1024      // 256 MB
+	DefaultProcLimit   = 16                     // 16 processes
 	DefaultStdoutLimit = 256 * 1024 * 1024      // 256 MB
 	DefaultStderrLimit = 10 * 1024              // 10 kB
 )
@@ -36,6 +37,9 @@ type Task struct {
 
 	// MemoryLimit is the memory limit in bytes.
 	MemoryLimit uint64
+
+	// ProcLimit is the process limit.
+	ProcLimit uint64
 
 	// StdoutLimit is the stdout limit in bytes.
 	StdoutLimit int64
@@ -76,6 +80,7 @@ func DefaultTask() *Task {
 		Cmd:         []string{},
 		TimeLimit:   DefaultTimeLimit,
 		MemoryLimit: DefaultMemoryLimit,
+		ProcLimit:   DefaultProcLimit,
 		StdoutLimit: DefaultStdoutLimit,
 		StderrLimit: DefaultStderrLimit,
 		Env:         DefaultEnv,
@@ -106,6 +111,12 @@ func (t *Task) WithTimeLimit(timeLimit uint64) *Task {
 // WithMemoryLimit sets the memory limit in bytes.
 func (t *Task) WithMemoryLimit(memoryLimit uint64) *Task {
 	t.MemoryLimit = memoryLimit
+	return t
+}
+
+// WithProcLimit sets the process limit in bytes.
+func (t *Task) WithProcLimit(procLimit uint64) *Task {
+	t.MemoryLimit = procLimit
 	return t
 }
 
@@ -224,6 +235,7 @@ func (t *Task) ToPbRequest() *pb.Request {
 				CpuTimeLimit:   t.TimeLimit,
 				ClockTimeLimit: t.TimeLimit * 2,
 				MemoryLimit:    t.MemoryLimit,
+				ProcLimit:      t.ProcLimit,
 				CopyIn:         copyIn,
 				CopyOut:        []*pb.Request_CmdCopyOutFile{{Name: "stderr"}},
 				CopyOutCached:  append([]*pb.Request_CmdCopyOutFile{{Name: "stdout"}}, appendedCopyOut...),
