@@ -1,11 +1,16 @@
 log_level: debug
 database:
-  host: localhost
-  port: 5432
-  user: postgres
-  password: root
-  dbname: rindag
-  use_ssl: false
+  postgres:
+    host: localhost
+    port: 5432
+    user: postgres
+    password: root
+    dbname: rindag
+    use_ssl: false
+  redis:
+    host: localhost:6379
+    password: ""
+    db: 0
 storage:
   type: minio
   minio:

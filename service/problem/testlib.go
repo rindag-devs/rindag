@@ -14,7 +14,8 @@ const MaxTestlibMessageLen = 1024
 var TestlibSource []byte
 
 func ParseTestlibOutput(output string, fullScore int64) (
-	pb.Response_Result_StatusType, int64, string) {
+	pb.Response_Result_StatusType, int64, string,
+) {
 	accepted := func() (pb.Response_Result_StatusType, func(string) string) {
 		return pb.Response_Result_Accepted, func(s string) string {
 			if len(s) <= MaxTestlibMessageLen-3 {
@@ -61,17 +62,14 @@ func ParseTestlibOutput(output string, fullScore int64) (
 		status, builder = accepted()
 		score = fullScore
 		message = result[1]
-	} else if result :=
-		regexp.MustCompile(`^wrong answer (.*)$`).FindStringSubmatch(output); result != nil {
+	} else if result := regexp.MustCompile(`^wrong answer (.*)$`).FindStringSubmatch(output); result != nil {
 		status, builder = wrongAnswer()
 		message = result[1]
-	} else if result :=
-		regexp.MustCompile(`^wrong output format (.*)$`).FindStringSubmatch(output); result != nil {
+	} else if result := regexp.MustCompile(`^wrong output format (.*)$`).FindStringSubmatch(output); result != nil {
 		status, builder = formatError()
 		message = result[1]
-	} else if result :=
-		regexp.MustCompile(`^(?:partially correct|points) \(?([0-9.]*)\)? (.*)$`).
-			FindStringSubmatch(output); result != nil {
+	} else if result := regexp.MustCompile(`^(?:partially correct|points) \(?([0-9.]*)\)? (.*)$`).
+		FindStringSubmatch(output); result != nil {
 		p, _ := strconv.ParseFloat(result[1], 64)
 		if p >= 1 {
 			status, builder = accepted()

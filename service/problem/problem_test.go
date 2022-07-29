@@ -2,9 +2,10 @@ package problem
 
 import (
 	"context"
-	"rindag/etc"
-	"rindag/judge"
 	"testing"
+
+	"rindag/service/etc"
+	"rindag/service/judge"
 
 	"github.com/criyle/go-judge/pb"
 )
@@ -141,7 +142,8 @@ func TestJudgeAPlusB(t *testing.T) {
 	var inf pb.Request_File
 	var ouf pb.Request_File
 	ans := pb.Request_File{File: &pb.Request_File_Memory{Memory: &pb.Request_MemoryFile{
-		Content: []byte("the checker doesn't need an answer file")}}}
+		Content: []byte("the checker doesn't need an answer file"),
+	}}}
 
 	checkerCompileTask, err := checker.CompileTask(func(r *pb.Response_Result, err error) bool {
 		if finished := err == nil && r.Status == pb.Response_Result_Accepted; !finished {
@@ -201,7 +203,8 @@ func TestJudgeAPlusB(t *testing.T) {
 		}
 		t.Logf("inf: %s", r.FileIDs["stdout"])
 		inf = pb.Request_File{File: &pb.Request_File_Cached{Cached: &pb.Request_CachedFile{
-			FileID: r.FileIDs["stdout"]}}}
+			FileID: r.FileIDs["stdout"],
+		}}}
 		return true
 	})
 
@@ -267,7 +270,8 @@ func TestJudgeAPlusB(t *testing.T) {
 				return false
 			}
 			ouf = pb.Request_File{File: &pb.Request_File_Cached{Cached: &pb.Request_CachedFile{
-				FileID: r.FileIDs["stdout"]}}}
+				FileID: r.FileIDs["stdout"],
+			}}}
 			return true
 		})
 

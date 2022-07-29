@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"embed"
 	"io"
-	"rindag/etc"
-	"rindag/judge"
+
+	"rindag/service/etc"
+	"rindag/service/judge"
 
 	"github.com/criyle/go-judge/pb"
 	log "github.com/sirupsen/logrus"
@@ -107,7 +108,8 @@ func (c *Checker) CompileTask(cb judge.CallbackFunction) (*judge.Task, error) {
 // CheckTask needs a checker binary file ID, an input file, and output file, and a standard answer.
 // Returns a judge task to run the checker.
 func (c *Checker) CheckTask(inf *pb.Request_File, ouf *pb.Request_File, ans *pb.Request_File,
-	cb judge.CallbackFunction) *judge.Task {
+	cb judge.CallbackFunction,
+) *judge.Task {
 	conf := &etc.Config.Checker
 	return judge.DefaultTask().
 		WithCmd("checker", "input.txt", "output.txt", "answer.txt").

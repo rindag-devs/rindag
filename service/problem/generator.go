@@ -3,8 +3,9 @@ package problem
 import (
 	"bytes"
 	"io"
-	"rindag/etc"
-	"rindag/judge"
+
+	"rindag/service/etc"
+	"rindag/service/judge"
 
 	"github.com/criyle/go-judge/pb"
 	log "github.com/sirupsen/logrus"
@@ -24,7 +25,8 @@ type problemGeneratorSource struct {
 // NewProblemGenerator creates a generator from a problem.
 func NewProblemGenerator(problem *Problem, rev int64) *Generator {
 	return &Generator{
-		source: problemGeneratorSource{Problem: problem, Rev: rev}, binaryID: new(string)}
+		source: problemGeneratorSource{Problem: problem, Rev: rev}, binaryID: new(string),
+	}
 }
 
 func (s problemGeneratorSource) ReadCloser() (io.ReadCloser, error) {

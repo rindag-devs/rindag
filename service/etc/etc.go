@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 
+	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -67,12 +68,19 @@ type Configuration struct {
 	} `mapstructure:"generator"`
 
 	Database struct {
-		Host     string `mapstructure:"host"`
-		Port     int    `mapstructure:"port"`
-		User     string `mapstructure:"user"`
-		Password string `mapstructure:"password"`
-		DBName   string `mapstructure:"dbname"`
-		UseSSL   bool   `mapstructure:"use_ssl"`
+		Postgres struct {
+			Host     string `mapstructure:"host"`
+			Port     int    `mapstructure:"port"`
+			User     string `mapstructure:"user"`
+			Password string `mapstructure:"password"`
+			DBName   string `mapstructure:"dbname"`
+			UseSSL   bool   `mapstructure:"use_ssl"`
+		} `mapstructure:"postgres"`
+		Redis struct {
+			Host     string `mapstructure:"host"`
+			Password string `mapstructure:"password"`
+			DB       int    `mapstructure:"db"`
+		} `mapstructure:"redis"`
 	} `mapstructure:"database"`
 
 	Storage struct {
@@ -111,7 +119,7 @@ func setLogLevel(level string) {
 	}
 }
 
-func init() {
+func loadConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("/etc/rindag/")
@@ -119,7 +127,7 @@ func init() {
 	viper.SetEnvPrefix("rindag")
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
-		log.WithError(err).Info("Failed to read config, use default config")
+		log.WithError(err).Warning("Failed to read config, use default config")
 		if err := viper.ReadConfig(bytes.NewReader(DefaultConfig)); err != nil {
 			log.WithError(err).Fatal("Failed to read default config")
 		}
@@ -130,6 +138,11 @@ func init() {
 	}); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func init() {
+	log.SetFormatter(&nested.Formatter{})
+	loadConfig()
 	setLogLevel(Config.LogLevel)
 	log.Info("Loaded config")
 }

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"io"
 
-	"rindag/etc"
-	"rindag/judge"
+	"rindag/service/etc"
+	"rindag/service/judge"
 
 	"github.com/criyle/go-judge/pb"
 	log "github.com/sirupsen/logrus"
@@ -25,7 +25,8 @@ type problemValidatorSource struct {
 // NewProblemValidator creates a validator from a problem.
 func NewProblemValidator(problem *Problem, rev int64) *Validator {
 	return &Validator{
-		source: problemValidatorSource{Problem: problem, Rev: rev}, binaryID: new(string)}
+		source: problemValidatorSource{Problem: problem, Rev: rev}, binaryID: new(string),
+	}
 }
 
 func (s problemValidatorSource) ReadCloser() (io.ReadCloser, error) {

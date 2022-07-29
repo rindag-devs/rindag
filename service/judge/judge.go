@@ -3,9 +3,10 @@ package judge
 import (
 	"context"
 	"errors"
-	"rindag/etc"
 	"sync"
 	"time"
+
+	"rindag/service/etc"
 
 	"github.com/criyle/go-judge/pb"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -40,7 +41,8 @@ func newJudge(execClient pb.ExecutorClient) *Judge {
 }
 
 func (j *Judge) processSingleTask(
-	parentCtx context.Context, parentCancel context.CancelFunc, task *Task) {
+	parentCtx context.Context, parentCancel context.CancelFunc, task *Task,
+) {
 	// Create a new context for the task, and cancel it when the parent context is ended.
 	ctx, cancel := context.WithTimeout(
 		parentCtx, time.Duration(2*task.TimeLimit)*time.Millisecond+30*time.Second)
@@ -178,7 +180,9 @@ func init() {
 	// Initialize judges from config
 	for id, c := range etc.Config.Judges {
 		log.WithField("id", id).Debug("Initializing judge")
-		AddAndStart(id, c.Host, c.Token)
+		if err := AddAndStart(id, c.Host, c.Token); err != nil {
+			log.WithError(err).WithField("id", id).Fatal("Failed to initialize judge")
+		}
 	}
 }
 

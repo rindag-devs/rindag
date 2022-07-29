@@ -24,7 +24,8 @@ type Request struct {
 
 // NewRequest creates a new request.
 func NewRequest(
-	ctx context.Context) *Request {
+	ctx context.Context,
+) *Request {
 	return &Request{
 		ctx:        ctx,
 		ID:         uuid.New(),
