@@ -44,3 +44,6 @@ fabric.properties
 
 # binary files
 rindag
+
+# swagger-codegen generated files
+docs/
