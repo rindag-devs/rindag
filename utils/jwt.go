@@ -2,7 +2,11 @@ package utils
 
 import (
 	"crypto/rand"
+	"errors"
 	"time"
+
+	"rindag/model"
+	"rindag/service/db"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -12,24 +16,53 @@ import (
 // TokenExpiration is the expiration time of the token.
 const TokenExpiration = time.Hour * 24 * 7
 
-var TokenSecret []byte
+var (
+	TokenSecret         []byte
+	ErrTokenInvalidUser = errors.New("token has invalid user")
+	ErrTokenNotValidYet = errors.New("token is not valid yet")
+	ErrTokenExpired     = errors.New("token is expired")
+)
 
 // UserClaims is the custom claims type for JWT.
 type UserClaims struct {
-	ID uuid.UUID `json:"id"`
-	jwt.RegisteredClaims
+	ID        uuid.UUID `json:"id"`
+	IssuedAt  time.Time `json:"iat"`
+	ExpiresAt time.Time `json:"exp"`
+}
+
+// Valid returns an error if the token is invalid.
+func (c UserClaims) Valid() error {
+	now := time.Now()
+
+	if c.IssuedAt.After(now) {
+		return ErrTokenNotValidYet
+	}
+
+	if c.ExpiresAt.Before(now) {
+		return ErrTokenExpired
+	}
+
+	user, err := model.GetUserById(db.PDB, c.ID)
+	if err != nil {
+		return ErrTokenInvalidUser
+	}
+
+	if c.IssuedAt.Before(user.TokenReq) {
+		// Token is issued before the the last logout.
+		// When user logout, the token is invalid.
+		return ErrTokenExpired
+	}
+
+	return nil
 }
 
 // GenerateTOken generates a JWT token for the user.
 func GenerateToken(id uuid.UUID) (string, error) {
+	now := time.Now()
 	claims := UserClaims{
-		ID: id,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "rindag",
-			Subject:   "user",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TokenExpiration)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
+		ID:        id,
+		IssuedAt:  now,
+		ExpiresAt: now.Add(TokenExpiration),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(TokenSecret)

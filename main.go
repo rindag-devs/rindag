@@ -8,14 +8,26 @@ import (
 	"syscall"
 	"time"
 
+	_ "rindag/docs"
 	"rindag/handler"
 	"rindag/middleware"
-	_ "rindag/service/etc"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	ginlogrus "github.com/toorop/gin-logrus"
 )
+
+// @title       RinDAG API
+// @version     dev
+// @description API for RinDAG service.
+// @basePath    /
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in                         header
+// @name                       X-API-KEY
+// @description                API key that needs to be passed as part of the request in order to be authorized.
 
 func setupRouter() *gin.Engine {
 	r := gin.New()
@@ -31,6 +43,8 @@ func setupRouter() *gin.Engine {
 	{
 		authorized.DELETE("/logout", handler.HandleLogout)
 	}
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }

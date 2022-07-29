@@ -8,23 +8,26 @@ import (
 	"rindag/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
+// @param account  body string true "Account credentials"
+// @param password body string true "Account credentials"
 type loginReq struct {
-	Account  string `json:"user"`
+	Account  string `json:"account"`
 	Password string `json:"password"`
 }
 
-// @summary Login
-// @description returns a JWT token if the credentials are correct
-// @tags account
-// @accept json
-// @produce json
-// @param login body loginReq true "Login request"
-// @success 200 {object} json "{"token": "..."}"
-// @failure 400 {object} json "{"error": "..."}"
-// @failure 500 {object} json "{"error": "..."}"
-// @router /login [post]
+// @summary     Login
+// @description Returns a JWT token if the credentials are correct.
+// @tags        account
+// @accept      json
+// @produce     json
+// @param       loginReq body     loginReq true "Account credentials"
+// @success     200      {object} any{token=string}
+// @failure     400      {object} any{error=string}
+// @failure     500      {object} any{error=string} "Generate Token Failed"
+// @router      /login [post]
 func HandleLogin(c *gin.Context) {
 	var login loginReq
 	if err := c.ShouldBindJSON(&login); err != nil {
@@ -38,7 +41,7 @@ func HandleLogin(c *gin.Context) {
 		return
 	}
 
-	if user.Password != login.Password {
+	if !user.ValidatePassword(login.Password) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid credentials"})
 		return
 	}
@@ -52,14 +55,18 @@ func HandleLogin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-// @summary Logout
-// @description logs out the user and deletes the JWT token
-// @accept json
-// @produce json
-// @success 200 {object} json "{"message": "logged out"}"
-// @failure 401 {object} json "{"error": "..."}"
-// @router /logout [delete]
+// @summary     Logout
+// @description Logs out the user and deletes the JWT token.
+// @tags        account
+// @accept      json
+// @produce     json
+// @success     200 {object} any{message=string}
+// @failure     401 {object} any{error=string}
+// @security    ApiKeyAuth
+// @router      /logout [delete]
 func HandleLogout(c *gin.Context) {
-	c.SetCookie("token", "", -1, "/", "", false, true)
+	userID, _ := c.MustGet("_user").(uuid.UUID)
+	user, _ := model.GetUserById(db.PDB, userID)
+	user.ExpireToken(db.PDB)
 	c.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }

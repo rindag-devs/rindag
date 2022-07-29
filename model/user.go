@@ -1,7 +1,10 @@
 package model
 
 import (
+	"time"
+
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -11,6 +14,7 @@ type User struct {
 	Name     string    `gorm:"not null"`
 	Password string    `gorm:"not null"`
 	Email    string    `gorm:"not null"`
+	TokenReq time.Time `gorm:"not null"`
 }
 
 // GetUser returns a user by Name / Email.
@@ -22,4 +26,24 @@ func GetUser(db *gorm.DB, account string) (*User, error) {
 		err = db.Where("email = ?", account).First(user).Error
 	}
 	return user, err
+}
+
+// GetUserById returns a user by ID.
+func GetUserById(db *gorm.DB, id uuid.UUID) (*User, error) {
+	user := &User{}
+	err := db.Where("id = ?", id).First(user).Error
+	return user, err
+}
+
+// ValidatePassword validates the password.
+// Use bcrypt to compare the password.
+func (user *User) ValidatePassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	return err == nil
+}
+
+// ExpireToken makes all the tokens of the user expired.
+func (user *User) ExpireToken(db *gorm.DB) {
+	user.TokenReq = time.Now()
+	db.Save(&user)
 }
