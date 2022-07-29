@@ -15,11 +15,11 @@ type User struct {
 
 // GetUser returns a user by Name / Email.
 // The priority is given to Name.
-func GetUser(db *gorm.DB, pat string) (*User, error) {
+func GetUser(db *gorm.DB, account string) (*User, error) {
 	user := &User{}
-	err := db.Where("name = ?", pat).First(user).Error
+	err := db.Where("name = ?", account).First(user).Error
 	if err != nil {
-		err = db.Where("email = ?", pat).First(user).Error
+		err = db.Where("email = ?", account).First(user).Error
 	}
 	return user, err
 }
