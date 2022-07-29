@@ -3,7 +3,7 @@ database:
   postgres:
     host: localhost
     port: 5432
-    user: postgres
+    user: root
     password: root
     dbname: rindag
     use_ssl: false
