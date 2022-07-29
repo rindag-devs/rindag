@@ -2,6 +2,6 @@
 
 docker run -d \
   --name rindag-redis \
-  --rm
+  --rm \
   -p 6379:6379 \
   redis:7-alpine
