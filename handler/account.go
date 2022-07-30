@@ -12,37 +12,28 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// @param account  body string true "Account credentials"
-// @param password body string true "Account credentials"
-type loginReq struct {
-	Account  string `json:"account"`
-	Password string `json:"password"`
-}
-
 // @summary     Login
 // @description Returns a JWT token if the credentials are correct.
 // @tags        account
 // @accept      json
 // @produce     json
-// @param       loginReq body     loginReq true "Account credentials"
-// @success     200      {object} any{token=string}
-// @failure     400      {object} any{error=string}
-// @failure     500      {object} any{error=string} "Generate Token Failed"
+// @param       account body     string true "User account"
+// @param       account body     string true "User password (unencrypted plaintext)"
+// @success     200     {object} any{token=string}
+// @failure     400     {object} any{error=string}
+// @failure     500     {object} any{error=string} "Generate Token Failed"
 // @router      /login [post]
 func HandleLogin(c *gin.Context) {
-	var req loginReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	account := c.GetString("account")
+	password := c.GetString("password")
 
-	user, err := model.GetUser(db.PDB, req.Account)
+	user, err := model.GetUser(db.PDB, account)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if !user.ValidatePassword(req.Password) {
+	if !user.ValidatePassword(password) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid credentials"})
 		return
 	}
