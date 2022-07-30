@@ -275,7 +275,7 @@ func TestJudgeAPlusB(t *testing.T) {
 			return true
 		})
 
-	j, err := judge.GetIdleJudge()
+	_, j, err := judge.GetIdleJudge()
 	if err != nil {
 		t.Fatal(err)
 	}

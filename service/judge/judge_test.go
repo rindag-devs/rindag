@@ -20,7 +20,7 @@ import (
 // 6. If the request's result is success, check the stdout.
 // 7. If the request's result is failure, check the error.
 func TestEcho(t *testing.T) {
-	judge, err := GetIdleJudge()
+	_, judge, err := GetIdleJudge()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestEcho(t *testing.T) {
 			}
 			stdoutID := r.FileIDs["stdout"]
 			t.Logf("stdoutID: %s", stdoutID)
-			stdout, err := judge.GetFile(context.TODO(), stdoutID)
+			stdout, err := judge.FileGet(context.TODO(), stdoutID)
 			if err != nil {
 				t.Fatal(err)
 				return false
@@ -70,7 +70,7 @@ func TestEcho(t *testing.T) {
 // 5. Execute the run task.
 // 6. Check the output of the run task.
 func TestAPlusB(t *testing.T) {
-	judge, err := GetIdleJudge()
+	_, judge, err := GetIdleJudge()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,7 @@ func TestAPlusB(t *testing.T) {
 			}
 			stdoutID := r.FileIDs["stdout"]
 			t.Logf("stdoutID: %s", stdoutID)
-			stdout, err := judge.GetFile(context.TODO(), stdoutID)
+			stdout, err := judge.FileGet(context.TODO(), stdoutID)
 			if err != nil {
 				t.Error(err)
 				wg.Done()

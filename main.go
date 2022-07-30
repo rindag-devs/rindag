@@ -42,6 +42,15 @@ func setupRouter() *gin.Engine {
 	authorized.Use(middleware.JWTMiddleware())
 	{
 		authorized.DELETE("/logout", handler.HandleLogout)
+
+		judge := authorized.Group("/judge")
+		{
+			judge.GET("/idle", handler.HandleIdleJudge)
+			judge.GET("/file/:judge_id", handler.HandleJudgeFileList)
+			judge.GET("/file/:judge_id/:file_id", handler.HandleJudgeFileGet)
+			judge.POST("/file/:judge_id/", handler.HandleJudgeFileAdd)
+			judge.DELETE("/file/:judge_id/:file_id", handler.HandleJudgeFileDelete)
+		}
 	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

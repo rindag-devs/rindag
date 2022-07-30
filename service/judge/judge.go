@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Judge is a judge server.
@@ -29,7 +30,9 @@ type Judge struct {
 
 // judges is a collection of judges.
 var (
-	judges = make(map[string]*Judge)
+	judges           = make(map[string]*Judge)
+	ErrJudgeNotFound = errors.New("judge not found")
+	ErrJudgeExists   = errors.New("judge already exists")
 )
 
 // NewJudge creates a new Judge.
@@ -113,8 +116,29 @@ func (j *Judge) AddRequest(req *Request) {
 	j.requests <- req
 }
 
-func (j *Judge) GetFile(ctx context.Context, fileID string) (*pb.FileContent, error) {
+func (j *Judge) FileList(ctx context.Context) (map[string]string, error) {
+	res, err := j.execClient.FileList(ctx, &emptypb.Empty{})
+	if err != nil {
+		return nil, err
+	}
+	return res.FileIDs, nil
+}
+
+func (j *Judge) FileGet(ctx context.Context, fileID string) (*pb.FileContent, error) {
 	return j.execClient.FileGet(ctx, &pb.FileID{FileID: fileID})
+}
+
+func (j *Judge) FileAdd(ctx context.Context, content []byte) (string, error) {
+	fileID, err := j.execClient.FileAdd(ctx, &pb.FileContent{Content: content})
+	if err != nil {
+		return "", err
+	}
+	return fileID.FileID, nil
+}
+
+func (j *Judge) FileDelete(ctx context.Context, fileID string) error {
+	_, err := j.execClient.FileDelete(ctx, &pb.FileID{FileID: fileID})
+	return err
 }
 
 // GetJudge returns a judge by its id.
@@ -122,33 +146,35 @@ func (j *Judge) GetFile(ctx context.Context, fileID string) (*pb.FileContent, er
 func GetJudge(id string) (*Judge, error) {
 	j, ok := judges[id]
 	if !ok {
-		return nil, errors.New("judge not found")
+		return nil, ErrJudgeNotFound
 	}
 	return j, nil
 }
 
 // GetIdleJudge returns a judge that has the least number of tasks.
 // If there is no idle judge, returns an error.
-func GetIdleJudge() (*Judge, error) {
+func GetIdleJudge() (string, *Judge, error) {
 	var (
-		idleJudge *Judge = nil
-		idleCount int
+		idleJudgeID string
+		idleJudge   *Judge = nil
+		idleCount   int
 	)
-	for _, j := range judges {
+	for id, j := range judges {
 		if idleJudge == nil || len(j.requests) < idleCount {
 			idleJudge = j
+			idleJudgeID = id
 			idleCount = len(j.requests)
 		}
 	}
 	if idleJudge == nil {
-		return nil, errors.New("no idle judge")
+		return "", nil, ErrJudgeNotFound
 	}
-	return idleJudge, nil
+	return idleJudgeID, idleJudge, nil
 }
 
 func AddAndStart(id string, host string, token string) error {
 	if _, ok := judges[id]; ok {
-		return errors.New("judge already exists")
+		return ErrJudgeExists
 	}
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

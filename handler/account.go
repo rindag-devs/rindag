@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // @param account  body string true "Account credentials"
@@ -29,19 +30,19 @@ type loginReq struct {
 // @failure     500      {object} any{error=string} "Generate Token Failed"
 // @router      /login [post]
 func HandleLogin(c *gin.Context) {
-	var login loginReq
-	if err := c.ShouldBindJSON(&login); err != nil {
+	var req loginReq
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user, err := model.GetUser(db.PDB, login.Account)
+	user, err := model.GetUser(db.PDB, req.Account)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if !user.ValidatePassword(login.Password) {
+	if !user.ValidatePassword(req.Password) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid credentials"})
 		return
 	}
@@ -58,15 +59,18 @@ func HandleLogin(c *gin.Context) {
 // @summary     Logout
 // @description Logs out the user and deletes the JWT token.
 // @tags        account
-// @accept      json
 // @produce     json
 // @success     200 {object} any{message=string}
-// @failure     401 {object} any{error=string}
 // @security    ApiKeyAuth
 // @router      /logout [delete]
 func HandleLogout(c *gin.Context) {
+	// _user was already set in the middleware and it must be valid.
 	userID, _ := c.MustGet("_user").(uuid.UUID)
-	user, _ := model.GetUserById(db.PDB, userID)
+	user, err := model.GetUserById(db.PDB, userID)
+	if err != nil {
+		// It is almost impossible to get here.
+		log.WithError(err).Panic("Failed to get user")
+	}
 	user.ExpireToken(db.PDB)
 	c.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
