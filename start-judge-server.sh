@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 docker run -d \
+	--name rindag-judge-server \
   -it \
   --rm \
   --privileged \
