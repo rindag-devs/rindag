@@ -84,7 +84,6 @@ func HandleJudgeFileGet(c *gin.Context) {
 	ctx := c.Request.Context()
 	file, err := j.FileGet(ctx, fileID)
 	if err != nil {
-		// TODO: Adapt to the new version
 		status, ok := status.FromError(err)
 		if !ok || status.Code() != codes.NotFound {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -174,7 +173,6 @@ func HandleJudgeFileDelete(c *gin.Context) {
 	err = j.FileDelete(ctx, fileID)
 	if err != nil {
 		status, ok := status.FromError(err)
-		// TODO: Adapt to the new version
 		if !ok || status.Code() != codes.NotFound {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}

@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/assembla/svn2go v0.0.11
-	github.com/criyle/go-judge v1.4.8
+	github.com/criyle/go-judge v1.4.9
 	github.com/deckarep/golang-set/v2 v2.1.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-redis/redis/v9 v9.0.0-beta.2
