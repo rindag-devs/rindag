@@ -34,7 +34,7 @@ func HandleLogin(c *gin.Context) {
 		return
 	}
 
-	if !user.ValidatePassword(password) {
+	if !user.Authenticate(password) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid credentials"})
 		return
 	}

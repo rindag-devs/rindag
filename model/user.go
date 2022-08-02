@@ -35,9 +35,9 @@ func GetUserById(db *gorm.DB, id uuid.UUID) (*User, error) {
 	return user, err
 }
 
-// ValidatePassword validates the password.
+// Authenticate validates the password.
 // Use bcrypt to compare the password.
-func (user *User) ValidatePassword(password string) bool {
+func (user *User) Authenticate(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	return err == nil
 }
