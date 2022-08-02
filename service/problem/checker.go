@@ -42,20 +42,16 @@ func (s builtinCheckerSource) ReadCloser() (io.ReadCloser, error) {
 
 type problemCheckerSource struct {
 	Problem *Problem
-	Rev     int64
+	Rev     [20]byte
 }
 
 // NewProblemChecker creates a checker from a problem.
-func NewProblemChecker(problem *Problem, rev int64) *Checker {
+func NewProblemChecker(problem *Problem, rev [20]byte) *Checker {
 	return &Checker{source: problemCheckerSource{Problem: problem, Rev: rev}, binaryID: new(string)}
 }
 
 func (s problemCheckerSource) ReadCloser() (io.ReadCloser, error) {
-	repo, err := s.Problem.Repo()
-	if err != nil {
-		return nil, err
-	}
-	return repo.FileContent("checker.cpp", s.Rev)
+	return s.Problem.File("checker.cpp", s.Rev)
 }
 
 type sourceCheckerSource struct {

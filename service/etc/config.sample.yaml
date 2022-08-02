@@ -1,4 +1,5 @@
 log_level: debug
+
 database:
   postgres:
     host: localhost
@@ -11,6 +12,7 @@ database:
     host: localhost:6379
     password: ""
     db: 0
+
 storage:
   type: minio
   minio:
@@ -19,15 +21,21 @@ storage:
     secret_access_key: minio123
     use_ssl: true
     bucket: rindag
+
+git:
+  repo_dir: /var/lib/rindag/git/
+
 judges:
   local1:
     host: localhost:5051
     token: ""
+
 compile:
   cmd: ["/usr/bin/g++", "-std=c++17", "-O2"]
   time_limit: 10000000000
   memory_limit: 256000000
   stderr_limit: 1024
+
 validator:
   compile:
     args: []
@@ -35,6 +43,7 @@ validator:
     time_limit: 10000000000
     memory_limit: 256000000
     stderr_limit: 1024
+
 checker:
   compile:
     args: []
@@ -42,6 +51,7 @@ checker:
     time_limit: 10000000000
     memory_limit: 256000000
     stderr_limit: 1024
+
 generator:
   compile:
     args: []

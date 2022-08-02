@@ -19,22 +19,18 @@ type Validator struct {
 
 type problemValidatorSource struct {
 	Problem *Problem
-	Rev     int64
+	Rev     [20]byte
 }
 
 // NewProblemValidator creates a validator from a problem.
-func NewProblemValidator(problem *Problem, rev int64) *Validator {
+func NewProblemValidator(problem *Problem, rev [20]byte) *Validator {
 	return &Validator{
 		source: problemValidatorSource{Problem: problem, Rev: rev}, binaryID: new(string),
 	}
 }
 
 func (s problemValidatorSource) ReadCloser() (io.ReadCloser, error) {
-	repo, err := s.Problem.Repo()
-	if err != nil {
-		return nil, err
-	}
-	return repo.FileContent("validator.cpp", s.Rev)
+	return s.Problem.File("validator.cpp", s.Rev)
 }
 
 type sourceValidatorSource struct {

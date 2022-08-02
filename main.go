@@ -38,6 +38,13 @@ func setupRouter() *gin.Engine {
 	r.GET("/ping", handler.HandlePing)
 	r.POST("/login", handler.HandleLogin)
 
+	git := r.Group("/git")
+	{
+		git.POST("/:repo/git-upload-pack", handler.HandleGitUploadPack)
+		git.POST("/:repo/git-receive-pack", handler.HandleGitReceivePack)
+		git.GET("/:repo/*url", handler.HandleGET)
+	}
+
 	authorized := r.Group("/")
 	authorized.Use(middleware.JWTMiddleware())
 	{

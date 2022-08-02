@@ -92,10 +92,7 @@ func HandleJudgeFileGet(c *gin.Context) {
 		return
 	}
 
-	if _, err := c.Writer.Write(file.Content); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	_, _ = c.Writer.Write(file.Content)
 }
 
 // @summary     JudgeFileAdd

@@ -19,6 +19,44 @@ var DefaultConfig []byte
 type Configuration struct {
 	LogLevel string `mapstructure:"log_level"`
 
+	Database struct {
+		Postgres struct {
+			Host     string `mapstructure:"host"`
+			Port     int    `mapstructure:"port"`
+			User     string `mapstructure:"user"`
+			Password string `mapstructure:"password"`
+			DBName   string `mapstructure:"dbname"`
+			UseSSL   bool   `mapstructure:"use_ssl"`
+		} `mapstructure:"postgres"`
+		Redis struct {
+			Host     string `mapstructure:"host"`
+			Password string `mapstructure:"password"`
+			DB       int    `mapstructure:"db"`
+		} `mapstructure:"redis"`
+	} `mapstructure:"database"`
+
+	Storage struct {
+		// Type is the type of storage (local or minio).
+		Type  string `mapstructure:"type"`
+		Local struct {
+			// Path is the path to the storage directory.
+			Path string `mapstructure:"path"`
+		} `mapstructure:"local"`
+		MinIO struct {
+			Endpoint        string `mapstructure:"endpoint"`
+			AccessKeyID     string `mapstructure:"access_key_id"`
+			SecretAccessKey string `mapstructure:"secret_access_key"`
+			UseSSL          bool   `mapstructure:"use_ssl"`
+			Bucket          string `mapstructure:"bucket"`
+		} `mapstructure:"minio"`
+	} `mapstructure:"storage"`
+
+	Git struct {
+		// RepoDir is the path to the git repositories.
+		// Like "/var/lib/rindag/git".
+		RepoDir string `mapstructure:"repo_dir"`
+	} `mapstructure:"git"`
+
 	Judges map[string]struct {
 		Host  string `mapstructure:"host"`
 		Token string `mapstructure:"token"`
@@ -66,38 +104,6 @@ type Configuration struct {
 			StderrLimit int64  `mapstructure:"stderr_limit"`
 		} `mapstructure:"run"`
 	} `mapstructure:"generator"`
-
-	Database struct {
-		Postgres struct {
-			Host     string `mapstructure:"host"`
-			Port     int    `mapstructure:"port"`
-			User     string `mapstructure:"user"`
-			Password string `mapstructure:"password"`
-			DBName   string `mapstructure:"dbname"`
-			UseSSL   bool   `mapstructure:"use_ssl"`
-		} `mapstructure:"postgres"`
-		Redis struct {
-			Host     string `mapstructure:"host"`
-			Password string `mapstructure:"password"`
-			DB       int    `mapstructure:"db"`
-		} `mapstructure:"redis"`
-	} `mapstructure:"database"`
-
-	Storage struct {
-		// Type is the type of storage (local or minio).
-		Type  string `mapstructure:"type"`
-		Local struct {
-			// Path is the path to the storage directory.
-			Path string `mapstructure:"path"`
-		} `mapstructure:"local"`
-		MinIO struct {
-			Endpoint        string `mapstructure:"endpoint"`
-			AccessKeyID     string `mapstructure:"access_key_id"`
-			SecretAccessKey string `mapstructure:"secret_access_key"`
-			UseSSL          bool   `mapstructure:"use_ssl"`
-			Bucket          string `mapstructure:"bucket"`
-		} `mapstructure:"minio"`
-	} `mapstructure:"storage"`
 }
 
 func setLogLevel(level string) {

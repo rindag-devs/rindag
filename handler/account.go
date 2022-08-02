@@ -29,7 +29,8 @@ func HandleLogin(c *gin.Context) {
 
 	user, err := model.GetUser(db.PDB, account)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		// We don't want to leak the fact that the user doesn't exist.
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid credentials"})
 		return
 	}
 

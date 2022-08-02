@@ -19,22 +19,18 @@ type Generator struct {
 
 type problemGeneratorSource struct {
 	Problem *Problem
-	Rev     int64
+	Rev     [20]byte
 }
 
 // NewProblemGenerator creates a generator from a problem.
-func NewProblemGenerator(problem *Problem, rev int64) *Generator {
+func NewProblemGenerator(problem *Problem, rev [20]byte) *Generator {
 	return &Generator{
 		source: problemGeneratorSource{Problem: problem, Rev: rev}, binaryID: new(string),
 	}
 }
 
 func (s problemGeneratorSource) ReadCloser() (io.ReadCloser, error) {
-	repo, err := s.Problem.Repo()
-	if err != nil {
-		return nil, err
-	}
-	return repo.FileContent("generator.cpp", s.Rev)
+	return s.Problem.File("generator.cpp", s.Rev)
 }
 
 type sourceGeneratorSource struct {

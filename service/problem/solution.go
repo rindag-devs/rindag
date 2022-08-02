@@ -20,7 +20,7 @@ type Solution struct {
 	// Problem is the problem to which the solution belongs.
 	Problem *Problem
 	// Rev is the revision of the repository which the solution belongs.
-	Rev int64
+	Rev [20]byte
 	// Name is the file name of the solution.
 	Name string
 	// Type is the type of solution.
@@ -31,9 +31,5 @@ type Solution struct {
 
 // SourceReadCloser returns a ReadCloser of the solution source.
 func (s *Solution) SourceReadCloser() (io.ReadCloser, error) {
-	repo, err := s.Problem.Repo()
-	if err != nil {
-		return nil, err
-	}
-	return repo.FileContent(s.Name, s.Rev)
+	return s.Problem.File(s.Name, s.Rev)
 }
