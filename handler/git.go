@@ -48,7 +48,8 @@ func packetWrite(str string) []byte {
 // The second return value is the path of the repo.
 // The third return value is true if no error occurs.
 func getRepoOrCreate(c *gin.Context) (string, string, bool) {
-	repoName := c.Param("repo")
+	// Remove redundant suffix ".git".
+	repoName := strings.TrimSuffix(c.Param("repo"), ".git")
 	if repoName == "" {
 		log.Warn("repo name is empty")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "repo is required"})

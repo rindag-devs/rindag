@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"syscall"
 
 	"rindag/service/etc"
@@ -14,6 +15,10 @@ import (
 
 // GetRepoPath returns the path to the git repository.
 func GetRepoPath(repo string) string {
+	// Ensure the repo name ends with ".git".
+	if !strings.HasSuffix(repo, ".git") {
+		repo += ".git"
+	}
 	return path.Join(etc.Config.Git.RepoDir, repo)
 }
 
