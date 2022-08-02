@@ -3,14 +3,17 @@ package db
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"rindag/model"
 	"rindag/service/etc"
 
 	"github.com/go-redis/redis/v9"
+	gormloggerlogrus "github.com/nekomeowww/gorm-logger-logrus"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var (
@@ -31,7 +34,15 @@ func getDSNFromConfig(c *etc.Configuration) string {
 func setupPostgres() {
 	dsn := getDSNFromConfig(etc.Config)
 	var err error
-	PDB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	PDB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: gormloggerlogrus.New(gormloggerlogrus.Options{
+			Logger:                    log.NewEntry(log.StandardLogger()),
+			LogLevel:                  logger.Info,
+			IgnoreRecordNotFoundError: true,
+			SlowThreshold:             time.Millisecond * 200,
+			FileWithLineNumField:      "file",
+		}),
+	})
 	if err != nil {
 		log.WithError(err).Fatal("Postgres connection failed")
 	}

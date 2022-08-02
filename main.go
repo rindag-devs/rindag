@@ -39,6 +39,7 @@ func setupRouter() *gin.Engine {
 	r.POST("/login", handler.HandleLogin)
 
 	git := r.Group("/git")
+	git.Use(middleware.GitAuthMiddleware())
 	{
 		git.POST("/:repo/git-upload-pack", handler.HandleGitUploadPack)
 		git.POST("/:repo/git-receive-pack", handler.HandleGitReceivePack)

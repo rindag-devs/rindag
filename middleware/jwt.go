@@ -12,7 +12,6 @@ import (
 // JWTMiddleware is a middleware that validates a JWT token.
 func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Debug(c.GetHeader("X-API-KEY"))
 		token, err := utils.ParseToken(c.GetHeader("X-API-KEY"))
 		if err != nil {
 			log.WithError(err).Error("Error parsing token")
