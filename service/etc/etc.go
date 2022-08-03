@@ -12,7 +12,7 @@ import (
 
 var Config *Configuration
 
-//go:embed config.sample.yaml
+//go:embed config.sample.toml
 var DefaultConfig []byte
 
 // Configuration is the Configuration structure.
@@ -127,7 +127,7 @@ func setLogLevel(level string) {
 
 func loadConfig() {
 	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
+	viper.SetConfigType("toml")
 	viper.AddConfigPath("/etc/rindag/")
 	viper.AddConfigPath(".")
 	viper.SetEnvPrefix("rindag")
