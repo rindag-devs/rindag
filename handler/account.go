@@ -12,29 +12,37 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type loginReq struct {
+	Account  string `json:"account"`
+	Password string `json:"password"`
+}
+
 // @summary     Login
 // @description Returns a JWT token if the credentials are correct.
 // @tags        account
 // @accept      json
 // @produce     json
-// @param       account body     string true "User account"
-// @param       account body     string true "User password (unencrypted plaintext)"
-// @success     200     {object} any{token=string}
-// @failure     400     {object} any{error=string}
-// @failure     500     {object} any{error=string} "Generate Token Failed"
+// @param       loginReq body     loginReq true "Account credentials"
+// @success     200      {object} any{token=string}
+// @failure     400      {object} any{error=string}
+// @failure     500      {object} any{error=string} "Generate Token Failed"
 // @router      /login [post]
 func HandleLogin(c *gin.Context) {
-	account := c.GetString("account")
-	password := c.GetString("password")
+	var params loginReq
 
-	user, err := model.GetUser(db.PDB, account)
+	if err := c.ShouldBindJSON(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := model.GetUser(db.PDB, params.Account)
 	if err != nil {
 		// We don't want to leak the fact that the user doesn't exist.
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid credentials"})
 		return
 	}
 
-	if !user.Authenticate(password) {
+	if !user.Authenticate(params.Password) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid credentials"})
 		return
 	}
