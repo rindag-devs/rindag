@@ -104,6 +104,10 @@ type Configuration struct {
 			StderrLimit int64  `mapstructure:"stderr_limit"`
 		} `mapstructure:"run"`
 	} `mapstructure:"generator"`
+
+	Problem struct {
+		InitialWorktree map[string]string `mapstructure:"initial_worktree"`
+	} `mapstructure:"problem"`
 }
 
 func setLogLevel(level string) {
@@ -126,19 +130,20 @@ func setLogLevel(level string) {
 }
 
 func loadConfig() {
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath("/etc/rindag/")
-	viper.AddConfigPath(".")
-	viper.SetEnvPrefix("rindag")
-	viper.AutomaticEnv()
-	if err := viper.ReadInConfig(); err != nil {
+	v := viper.NewWithOptions(viper.KeyDelimiter("::"))
+	v.SetConfigName("config")
+	v.SetConfigType("toml")
+	v.AddConfigPath("/etc/rindag/")
+	v.AddConfigPath(".")
+	v.SetEnvPrefix("rindag")
+	v.AutomaticEnv()
+	if err := v.ReadInConfig(); err != nil {
 		log.WithError(err).Warning("Failed to read config, use default config")
-		if err := viper.ReadConfig(bytes.NewReader(DefaultConfig)); err != nil {
+		if err := v.ReadConfig(bytes.NewReader(DefaultConfig)); err != nil {
 			log.WithError(err).Fatal("Failed to read default config")
 		}
 	}
-	if err := viper.UnmarshalExact(&Config, func(dc *mapstructure.DecoderConfig) {
+	if err := v.UnmarshalExact(&Config, func(dc *mapstructure.DecoderConfig) {
 		dc.ErrorUnused = true
 		dc.ZeroFields = true
 	}); err != nil {

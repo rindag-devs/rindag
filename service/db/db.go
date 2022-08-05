@@ -46,8 +46,10 @@ func setupPostgres() {
 	if err != nil {
 		log.WithError(err).Fatal("Postgres connection failed")
 	}
-	err = PDB.AutoMigrate(&model.User{})
-	if err != nil {
+	if err := PDB.AutoMigrate(&model.User{}); err != nil {
+		log.WithError(err).Fatal("Postgres migration failed")
+	}
+	if err := PDB.AutoMigrate(&model.Problem{}); err != nil {
 		log.WithError(err).Fatal("Postgres migration failed")
 	}
 	log.Info("Postgres connected")

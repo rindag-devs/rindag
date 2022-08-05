@@ -12,11 +12,14 @@ import (
 	"strconv"
 	"strings"
 
+	"rindag/model"
+	"rindag/service/db"
 	"rindag/service/git"
+	"rindag/service/problem"
 	"rindag/utils"
 
 	"github.com/gin-gonic/gin"
-	gogit "github.com/go-git/go-git/v5"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -43,35 +46,39 @@ func packetWrite(str string) []byte {
 	return []byte(s + str)
 }
 
-// getRepoOrCreate returns the repo path or creates a new repo.
-// The first return value is the name of repo.
-// The second return value is the path of the repo.
-// The third return value is true if no error occurs.
-func getRepoOrCreate(c *gin.Context) (string, string, bool) {
+// getRepo returns the repo path or creates a new repo.
+// The first return value is the path of the repo.
+// The second return value is true if no error occurs.
+func getRepo(c *gin.Context) (string, bool) {
 	// Remove redundant suffix ".git".
 	repoName := strings.TrimSuffix(c.Param("repo"), ".git")
 	if repoName == "" {
 		log.Warn("repo name is empty")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "repo is required"})
-		return "", "", false
+		return "", false
 	}
 
-	var err error
-	repoPath := git.GetRepoPath(repoName)
-	if git.RepoExists(repoName) {
-		if _, err = gogit.PlainOpen(repoPath); err != nil {
-			log.WithError(err).Error("failed to open repo")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return "", "", false
-		}
-	} else {
-		if _, err = gogit.PlainInit(repoPath, true); err != nil {
-			log.WithError(err).Error("failed to init repo")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return "", "", false
-		}
+	problemID, err := uuid.Parse(repoName)
+	if err != nil {
+		log.WithError(err).WithField("repoName", repoName).Warn("repo name is not a valid uuid")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "repo is not a valid uuid"})
+		return "", false
 	}
-	return repoName, repoPath, true
+
+	if _, err := model.GetProblemByID(db.PDB, problemID); err != nil {
+		log.WithError(err).Error("failed to get problem")
+		c.JSON(http.StatusNotFound, gin.H{"error": "repo is not found"})
+		return "", false
+	}
+
+	prob := problem.NewProblem(problemID)
+	if _, err := prob.GetOrInitRepo(); err != nil {
+		log.WithError(err).Error("failed to get or init repo")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return "", false
+	}
+
+	return git.GetRepoPath(problemID.String()), true
 }
 
 // handleRPC handles the git rpc.
@@ -97,7 +104,7 @@ func handleRPC(c *gin.Context, service string) {
 		}
 	}
 
-	_, repoPath, ok := getRepoOrCreate(c)
+	repoPath, ok := getRepo(c)
 	if !ok {
 		return
 	}
@@ -216,16 +223,16 @@ func HandleGitReceivePack(c *gin.Context) {
 	handleRPC(c, "receive-pack")
 }
 
-// HandleGET handles the GET request.
+// HandleGitGet handles the GET request.
 // This API is used by the git client.
-func HandleGET(c *gin.Context) {
+func HandleGitGet(c *gin.Context) {
 	url := c.Param("url")
 	for _, route := range routes {
 		if !route.re.MatchString(url) {
 			continue
 		}
 		log.WithField("url", url).WithField("reg", route.re.String()).Debug("matched")
-		_, repoPath, ok := getRepoOrCreate(c)
+		repoPath, ok := getRepo(c)
 		if !ok {
 			return
 		}

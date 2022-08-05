@@ -59,3 +59,80 @@ args = []
 time_limit = 10000000000
 memory_limit = 256000000
 stderr_limit = 1024
+
+[problem.initial_worktree]
+"stament-en.md" = '''
+{{ .background }}
+
+The problem in the preparation phase should preferably have no background, in which case remove the \probbackground section.
+
+If you must have them, put them all in this section instead of in the problem description.
+
+A template definition like `{{ .background }}` above will be converted into a format equivalent to the secondary title when exporting the problem statement.
+
+{{ .description }}
+
+The problem needs to be clear and easy to understand.
+
+It is important to let the participants know the objective of the problem early on, rather than stating it in the problem input section.
+
+In particular, try not to state information about the output format of the topic in this section. For example, you should use "Try to find any set of solutions to the problem or report no solutions" instead of "If there is a solution, output any set; if not, output $-1$".
+
+{{ .input }}
+
+- Use unordered lists to describe the input format.
+- Don't use "number", use "integer" or "real number" instead.
+- Don't use "positive integer", "real numbers with 5 decimal places" or "a string of ASCII characters". The description of the data range should be in the `{{ .range }}` section.
+
+{{ .output }}
+
+- Use unordered lists to describe the output format.
+- If the problem outputs a sequence of numbers and there is no solution, try to use "output a line of integer $-1$" without creating ambiguity. In other cases, use "output a line with the string `No solution`".
+- When you need to output string constants such as "yes", "no", "no solution", etc., you should use special judge to ignore the case of the constants. No one wants to lose points for outputting the wrong form of case.
+- If the output contains real numbers, you should use special judge to limit the size of the error rather than requiring that "$x$ decimal places be retained".
+
+{{ .sample }}
+
+{{ /* samples will be included automaticity */ }}
+
+{{ .sampleExplanations }}
+
+#### Sample 1
+
+Note that since `{{ .sampleExplanation }}` is converted to a secondary title, the subheading here should be tertiary.
+
+{{ .range }}
+
+If subtask is in the problem, use a table to describe the data range of the input data.
+
+| Subtask | Score | $n \le$ | $m \le$ | Sp.  | Depends |
+| ------- | ----- | ------- | ------- | ---- | ------- |
+| $1$     | $30$  | $5$     | $10^3$  | A, B | -       |
+| $2$     | $30$  | $10^5$  | $10^5$  | A    | $1$     |
+| $3$     | $40$  | $10^5$  | $10^5$  | -    | $2$     |
+
+- Special Restriction A: $n$ is odd.
+- Special Restriction B: $m$ is even.
+
+Don't forget the data range for all test cases or the lower bounds of numbers.
+
+For all test data, all of the following constraints are met:
+
+- $1 \le n \le 10^5$.
+- $1 \le m \le 10^5$.
+- $0 \le x \le 10^9$。
+- $x$ has $3$ decimal places.
+- The character set of $S$ is $\{\texttt A, \texttt B, \texttt C\}$.
+
+{{ .hint }}
+
+This paragraph is used to further explain the details in the topic or give hints.
+
+The representation of the mathematical symbols in the title should be in the paragraph.
+
+### Usage of Attached Files
+
+If the problem has files attached such as checker, their usage should be described here.
+
+Note that since `{{ .hint }}` is converted to a secondary title, the subheading here should be tertiary.
+'''

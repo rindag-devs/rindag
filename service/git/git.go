@@ -34,8 +34,8 @@ func RepoExists(repo string) bool {
 }
 
 // OpenRepo opens the git repository.
-func OpenRepo(repo string) (*gogit.Repository, error) {
-	path := GetRepoPath(repo)
+func OpenRepo(name string) (*gogit.Repository, error) {
+	path := GetRepoPath(name)
 	return gogit.PlainOpen(path)
 }
 

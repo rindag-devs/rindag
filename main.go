@@ -43,7 +43,7 @@ func setupRouter() *gin.Engine {
 	{
 		git.POST("/:repo/git-upload-pack", handler.HandleGitUploadPack)
 		git.POST("/:repo/git-receive-pack", handler.HandleGitReceivePack)
-		git.GET("/:repo/*url", handler.HandleGET)
+		git.GET("/:repo/*url", handler.HandleGitGet)
 	}
 
 	authorized := r.Group("/")
@@ -58,6 +58,12 @@ func setupRouter() *gin.Engine {
 			judge.GET("/file/:judge_id/:file_id", handler.HandleJudgeFileGet)
 			judge.POST("/file/:judge_id/", handler.HandleJudgeFileAdd)
 			judge.DELETE("/file/:judge_id/:file_id", handler.HandleJudgeFileDelete)
+		}
+
+		problem := authorized.Group("/problem")
+		{
+			problem.GET("/", handler.HandleProblemList)
+			problem.POST("/", handler.HandleProblemAdd)
 		}
 	}
 
