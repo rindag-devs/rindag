@@ -190,7 +190,7 @@ checker: "lcmp"
 #      - inf:
 #          name: "hand_1"
 #        is_sample: true
-#        in_test: false
+#        disable: true
 #      # A sample for a generated test.
 #      - inf:
 #          generator: "rnd"

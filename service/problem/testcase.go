@@ -16,10 +16,11 @@ type TestCase struct {
 	// IsSample is true if the test case is a sample.
 	IsSample bool `yaml:"is_sample" json:"is_sample"`
 
-	// InTest is true if this test is contained in the test case.
+	// Disable is true if this test is not contained in the test case.
 	//
-	// For example, you can use
-	InTest bool `yaml:"in_test" json:"in_test"`
+	// For example, you can use a test case with "IsSample" and "NoTest" to describe the rules
+	// for interactive problems.
+	Disable bool `yaml:"disable" json:"disable"`
 }
 
 // Input defined from multiple source including fixed / generated.
