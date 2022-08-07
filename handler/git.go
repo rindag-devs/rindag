@@ -72,7 +72,7 @@ func getRepo(c *gin.Context) (string, bool) {
 	}
 
 	prob := problem.NewProblem(problemID)
-	if _, err := prob.GetOrInitRepo(); err != nil {
+	if _, err := prob.Repo(); err != nil {
 		log.WithError(err).Error("failed to get or init repo")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return "", false
