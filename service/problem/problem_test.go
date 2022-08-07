@@ -131,9 +131,9 @@ func TestJudgeAPlusB(t *testing.T) {
 		}
 	`)
 
-	generator := NewSourceGenerator(generatorSource)
-	checker := NewSourceChecker(checkerSource)
-	validator := NewSourceValidator(validatorSource)
+	generator := NewGeneratorFromBytes(generatorSource)
+	checker := NewCheckerFromBytes(checkerSource)
+	validator := NewValidatorFromBytes(validatorSource)
 
 	result := make(chan bool)
 	defer close(result)

@@ -13,43 +13,40 @@ import (
 
 // Generator is a generator to the problem.
 type Generator struct {
-	source   source
+	// binaryID is the ID of the generator binary.
+	//
+	// If the generator is not compiled, the binaryID will be nil.
 	binaryID *string
+
+	// GetSource is a function returns the source code ReadCloser of the checker.
+	GetSource func() (io.ReadCloser, error)
 }
 
-type problemGeneratorSource struct {
-	Problem *Problem
-	Rev     [20]byte
+// NewGenerator creates a generator.
+func NewGenerator(getSource func() (io.ReadCloser, error)) *Generator {
+	return &Generator{binaryID: new(string), GetSource: getSource}
 }
 
-// NewProblemGenerator creates a generator from a problem.
-func NewProblemGenerator(problem *Problem, rev [20]byte) *Generator {
-	return &Generator{
-		source: problemGeneratorSource{Problem: problem, Rev: rev}, binaryID: new(string),
-	}
+// NewGeneratorFromProblem creates a generator from a problem.
+func NewGeneratorFromProblem(problem *Problem, rev [20]byte, path string) *Generator {
+	return NewGenerator(func() (io.ReadCloser, error) { return problem.File(path, rev) })
 }
 
-func (s problemGeneratorSource) ReadCloser() (io.ReadCloser, error) {
-	return s.Problem.File("generator.cpp", s.Rev)
+// NewGeneratorFromBytes creates a generator from the source code.
+func NewGeneratorFromBytes(source []byte) *Generator {
+	return NewGenerator(
+		func() (io.ReadCloser, error) { return io.NopCloser(bytes.NewReader(source)), nil })
 }
 
-type sourceGeneratorSource struct {
-	Source []byte
-}
-
-// NewSourceGenerator creates a generator from the source code.
-func NewSourceGenerator(source []byte) *Generator {
-	return &Generator{source: sourceGeneratorSource{Source: source}, binaryID: new(string)}
-}
-
-func (s sourceGeneratorSource) ReadCloser() (io.ReadCloser, error) {
-	return io.NopCloser(bytes.NewReader(s.Source)), nil
+// NewGeneratorFromReadCloser creates a generator from the ReadCloser.
+func NewGeneratorFromReadCloser(r io.ReadCloser) *Generator {
+	return NewGenerator(func() (io.ReadCloser, error) { return r, nil })
 }
 
 // CompileTask returns the compile task of the generator.
 func (g *Generator) CompileTask(cb judge.CallbackFunction) (*judge.Task, error) {
 	conf := etc.Config
-	source, err := g.source.ReadCloser()
+	source, err := g.GetSource()
 	if err != nil {
 		return nil, err
 	}

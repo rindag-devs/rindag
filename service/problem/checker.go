@@ -14,63 +14,57 @@ import (
 
 // Checker is a checker for special judge.
 type Checker struct {
-	source   source
-	binaryID *string // If the checker is not compiled, the binaryID will be none.
+	// binaryID is the ID of the checker binary.
+	//
+	// If the checker is not compiled, the binaryID will be nil.
+	binaryID *string
+
+	// GetSource is a function returns the source code ReadCloser of the checker.
+	GetSource func() (io.ReadCloser, error)
 }
 
-type builtinCheckerSource struct {
-	Name string
+// NewChecker creates a checker.
+func NewChecker(getSource func() (io.ReadCloser, error)) *Checker {
+	return &Checker{
+		binaryID:  new(string),
+		GetSource: getSource,
+	}
 }
 
 //go:embed third_party/testlib/checkers/*
 var builtinCheckersFS embed.FS
 
-// NewBuiltinChecker creates a checker from the builtin checkers.
+// BuiltinChecker creates a checker from the builtin checkers.
 // Available builtin checkers:
 //   - "wcmp" : Compare sequences of tokens (default).
 //   - "lcmp" : Compare files as sequence of tokens in lines.
 //   - "yesno" : Compare one token "YES" or "NO" (case insensitive).
 //   - "nyesno" : Like "yesno", but multiple tokens are allowed.
 //   - Other checkers in "third_party/testlib/checkers/".
-func NewBuiltinChecker(name string) *Checker {
-	return &Checker{source: builtinCheckerSource{Name: name}, binaryID: new(string)}
+func BuiltinChecker(name string) *Checker {
+	return NewChecker(func() (io.ReadCloser, error) { return builtinCheckersFS.Open(name) })
 }
 
-func (s builtinCheckerSource) ReadCloser() (io.ReadCloser, error) {
-	return builtinCheckersFS.Open(s.Name)
+// NewCheckerFromProblem creates a checker from a problem.
+func NewCheckerFromProblem(problem *Problem, rev [20]byte, path string) *Checker {
+	return NewChecker(func() (io.ReadCloser, error) { return problem.File(path, rev) })
 }
 
-type problemCheckerSource struct {
-	Problem *Problem
-	Rev     [20]byte
+// NewCheckerFromBytes creates a checker from the source code.
+func NewCheckerFromBytes(source []byte) *Checker {
+	return NewChecker(
+		func() (io.ReadCloser, error) { return io.NopCloser(bytes.NewReader(source)), nil })
 }
 
-// NewProblemChecker creates a checker from a problem.
-func NewProblemChecker(problem *Problem, rev [20]byte) *Checker {
-	return &Checker{source: problemCheckerSource{Problem: problem, Rev: rev}, binaryID: new(string)}
-}
-
-func (s problemCheckerSource) ReadCloser() (io.ReadCloser, error) {
-	return s.Problem.File("checker.cpp", s.Rev)
-}
-
-type sourceCheckerSource struct {
-	Source []byte
-}
-
-// NewSourceChecker creates a checker from the source code.
-func NewSourceChecker(source []byte) *Checker {
-	return &Checker{source: sourceCheckerSource{Source: source}, binaryID: new(string)}
-}
-
-func (c sourceCheckerSource) ReadCloser() (io.ReadCloser, error) {
-	return io.NopCloser(bytes.NewReader(c.Source)), nil
+// NewCheckerFromReadCloser creates a checker from the ReadCloser.
+func NewCheckerFromReadCloser(r io.ReadCloser) *Checker {
+	return NewChecker(func() (io.ReadCloser, error) { return r, nil })
 }
 
 // CompileTask returns the compile task of the checker.
 func (c *Checker) CompileTask(cb judge.CallbackFunction) (*judge.Task, error) {
 	conf := etc.Config
-	source, err := c.source.ReadCloser()
+	source, err := c.GetSource()
 	if err != nil {
 		return nil, err
 	}

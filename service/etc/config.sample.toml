@@ -61,7 +61,13 @@ memory_limit = 256000000
 stderr_limit = 1024
 
 [problem.initial_worktree]
-"stament-en.md" = '''
+"statement.en.md" = '''
+{{ /* This is the English statement of the problem. */ }}
+
+{{ /* If you don't need the English version of the statement, just delete the file and create "statement.<lang>.md". */ }}
+
+{{ /* Like "statement.zh-Hans.md" for Simplified Chinese. */ }}
+
 {{ .background }}
 
 The problem in the preparation phase should preferably have no background, in which case remove the \probbackground section.
@@ -122,7 +128,7 @@ For all test data, all of the following constraints are met:
 - $1 \le m \le 10^5$.
 - $0 \le x \le 10^9$。
 - $x$ has $3$ decimal places.
-- The character set of $S$ is $\{\texttt A, \texttt B, \texttt C\}$.
+- $S_i \in \{\texttt A, \texttt B, \texttt C\}$.
 
 {{ .hint }}
 
@@ -135,4 +141,66 @@ The representation of the mathematical symbols in the title should be in the par
 If the problem has files attached such as checker, their usage should be described here.
 
 Note that since `{{ .hint }}` is converted to a secondary title, the subheading here should be tertiary.
+'''
+"config.yaml" = '''
+# statements is a map of language and statement of the problem.
+statements:
+  en: "statement.en.md"
+  #  zh-Hans: "statement.zh-Hans.md"
+
+# checker is the problem checker.
+# - If Checker is the name of a built-in checker, it will use the built-in checker.
+# - If Checker is an existing path, it will use the Checker from that path.
+# - Otherwise an error will be returned.
+# See "https://github.com/MikeMirzayanov/testlib/tree/master/checkers" to see the built-in checkers.
+checker: "lcmp"
+
+# validator is path of problem validator.
+#validator: "validator.cpp"
+
+# generators is a map of names and paths of generators.
+#generators:
+#  rnd: "generators/rnd.cpp"
+
+# solutions is a map of names and paths to problem solutions.
+#solutions:
+#  std:
+#    path: "solutions/std.cpp"
+#    accepts: ["sample", "main"]
+#  bf1:
+#    path: "solutions/bf1"
+#    accepts: []
+
+# standard_solution is the name of the main correct solution.
+# If a solution is the standard solution, it should be marked as accepted for all test groups.
+#standard_solution: "std"
+
+# fixed_tests is a list of names and paths to problem fixed tests.
+# You can call these names later in the "TestGroups" section.
+#fixed_tests:
+#  hand_1: "tests/hand_1.in"
+
+# test_groups are test groups of the problem.
+#test_groups:
+#  # "sample" is the name of test group
+#  sample:
+#    full_score: 0
+#    tests:
+#      # A sample for a fixed test.
+#      - inf:
+#          name: "hand_1"
+#        is_sample: true
+#        in_test: false
+#      # A sample for a generated test.
+#      - inf:
+#          generator: "rnd"
+#          extra_args: ["-n", "5", "-m", "5"] # ./rnd --group sample -n 5 -m 5
+#        is_sample: true
+#  main:
+#    depends: ["sample"]
+#    full_score: 100
+#    tests:
+#      - inf:
+#          generator: "rnd"
+#          extra_args: ["-n", "100", "-m", "100"] # ./rnd --group main -n 100 -m 100
 '''

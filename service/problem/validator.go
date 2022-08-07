@@ -13,43 +13,40 @@ import (
 
 // Validator is a validator to the problem.
 type Validator struct {
-	source   source
+	// binaryID is the ID of the validator binary.
+	//
+	// If the validator is not compiled, the binaryID will be nil.
 	binaryID *string
+
+	// GetSource is a function returns the source code ReadCloser of the checker.
+	GetSource func() (io.ReadCloser, error)
 }
 
-type problemValidatorSource struct {
-	Problem *Problem
-	Rev     [20]byte
+// NewValidator creates a validator.
+func NewValidator(getSource func() (io.ReadCloser, error)) *Validator {
+	return &Validator{binaryID: new(string), GetSource: getSource}
 }
 
-// NewProblemValidator creates a validator from a problem.
-func NewProblemValidator(problem *Problem, rev [20]byte) *Validator {
-	return &Validator{
-		source: problemValidatorSource{Problem: problem, Rev: rev}, binaryID: new(string),
-	}
+// NewValidatorFromProblem creates a validator from a problem.
+func NewValidatorFromProblem(problem *Problem, rev [20]byte, path string) *Validator {
+	return NewValidator(func() (io.ReadCloser, error) { return problem.File(path, rev) })
 }
 
-func (s problemValidatorSource) ReadCloser() (io.ReadCloser, error) {
-	return s.Problem.File("validator.cpp", s.Rev)
+// NewValidatorFromBytes creates a validator from the source code.
+func NewValidatorFromBytes(source []byte) *Validator {
+	return NewValidator(
+		func() (io.ReadCloser, error) { return io.NopCloser(bytes.NewReader(source)), nil })
 }
 
-type sourceValidatorSource struct {
-	Source []byte
-}
-
-// NewSourceValidator creates a validator from the source code.
-func NewSourceValidator(source []byte) *Validator {
-	return &Validator{source: sourceValidatorSource{Source: source}, binaryID: new(string)}
-}
-
-func (s sourceValidatorSource) ReadCloser() (io.ReadCloser, error) {
-	return io.NopCloser(bytes.NewReader(s.Source)), nil
+// NewValidatorFromReadCloser creates a validator from the ReadCloser.
+func NewValidatorFromReadCloser(r io.ReadCloser) *Validator {
+	return NewValidator(func() (io.ReadCloser, error) { return r, nil })
 }
 
 // CompileTask returns the compile task of the validator.
 func (v *Validator) CompileTask(cb judge.CallbackFunction) (*judge.Task, error) {
 	conf := etc.Config
-	source, err := v.source.ReadCloser()
+	source, err := v.GetSource()
 	if err != nil {
 		return nil, err
 	}
