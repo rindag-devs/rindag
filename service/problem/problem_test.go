@@ -225,16 +225,17 @@ func TestJudgeAPlusB(t *testing.T) {
 		return
 	}
 
-	validateTask := validator.ValidateTask(&inf, func(r *pb.Response_Result, err error) bool {
-		if finished := err == nil && r.Status == pb.Response_Result_Accepted; !finished {
-			t.Error("validate task not finished")
-			t.Log(r.Status)
-			t.Log(string(r.Files["stderr"]))
-			result <- false
-			return false
-		}
-		return true
-	})
+	validateTask := validator.ValidateTask(
+		&inf, []string{}, func(r *pb.Response_Result, err error) bool {
+			if finished := err == nil && r.Status == pb.Response_Result_Accepted; !finished {
+				t.Error("validate task not finished")
+				t.Log(r.Status)
+				t.Log(string(r.Files["stderr"]))
+				result <- false
+				return false
+			}
+			return true
+		})
 
 	conf := etc.Config
 	solutionCompileTask := judge.DefaultTask().

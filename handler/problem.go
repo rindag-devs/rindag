@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"rindag/model"
@@ -19,7 +20,7 @@ import (
 // @accept      json
 // @produce     json
 // @success     200 {object} any{problems=[]model.Problem}
-// @failure     500 {object} any{error=string}
+// @failure     500             {object} any{error=string}
 // @security    ApiKeyAuth
 // @router      /problem [get]
 func HandleProblemList(c *gin.Context) {
@@ -72,10 +73,11 @@ func HandleProblemAdd(c *gin.Context) {
 // @description Get a problem's configuration. If the revision is not specified, it will use HEAD.
 // @tags        problem
 // @produce     json
-// @param       id  path     string true   "Problem ID"
-// @param       rev string   query  string false "Revision"
+// @param       id              path     string          true "Problem ID"
+// @param       rev string   query  string false "Commit hash"
 // @success     200 {object} problem.Config
-// @failure     404 {object} any{error=string}
+// @failure     400             {object} any{error=string}
+// @failure     404             {object} any{error=string}
 // @failure     500 {object} any{error=string}
 // @security    ApiKeyAuth
 // @router      /problem/{id}/config [get]
@@ -119,4 +121,68 @@ func HandleProblemConfigGet(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, conf)
+}
+
+type problemBuildReq struct {
+	Rev string `json:"rev" default:"HEAD"`
+}
+
+// @summary     ProblemBuild
+// @description Build a problem.
+// @tags        problem
+// @produce     json
+// @param       id  path     string true   "Problem ID"
+// @param       problemBuildReq body     problemBuildReq true "Problem build request"
+// @success     200             {object} any{build=problem.BuildInfo}
+// @failure     400 {object} any{error=string}
+// @failure     404 {object} any{error=string}
+// @failure     500 {object} any{error=string}
+// @security    ApiKeyAuth
+// @router      /problem/{id}/build [post]
+func HandleProblemBuild(c *gin.Context) {
+	idStr := c.Param("id")
+
+	params := problemBuildReq{Rev: "HEAD"}
+
+	if err := c.ShouldBindJSON(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	if _, err := model.GetProblemByID(db.PDB, id); err != nil {
+		log.WithError(err).Error("failed to get problem")
+		c.JSON(http.StatusNotFound, gin.H{"error": "failed to get problem"})
+		return
+	}
+
+	problem := problem.NewProblem(id)
+
+	repo, err := problem.Repo()
+	if err != nil {
+		log.WithError(err).Error("failed to get problem repo")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get problem repo"})
+		return
+	}
+
+	hash, err := repo.ResolveRevision(plumbing.Revision(params.Rev))
+	if err != nil {
+		log.WithError(err).Error("failed to resolve revision")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve revision"})
+		return
+	}
+
+	info := problem.Build(*hash)
+	log.Debugf("info: %v", info)
+	d, err := json.MarshalIndent(info, "", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Debugf("json: %v", string(d))
+	c.JSON(http.StatusOK, info)
 }

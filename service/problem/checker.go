@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"io"
+	"path"
 
 	"rindag/service/etc"
 	"rindag/service/judge"
@@ -31,7 +32,7 @@ func NewChecker(getSource func() (io.ReadCloser, error)) *Checker {
 	}
 }
 
-//go:embed third_party/testlib/checkers/*
+//go:embed third_party/testlib/checkers/*.cpp
 var builtinCheckersFS embed.FS
 
 // BuiltinChecker creates a checker from the builtin checkers.
@@ -42,12 +43,14 @@ var builtinCheckersFS embed.FS
 //   - "nyesno" : Like "yesno", but multiple tokens are allowed.
 //   - Other checkers in "third_party/testlib/checkers/".
 func BuiltinChecker(name string) *Checker {
-	return NewChecker(func() (io.ReadCloser, error) { return builtinCheckersFS.Open(name) })
+	return NewChecker(func() (io.ReadCloser, error) {
+		return builtinCheckersFS.Open(path.Join("third_party/testlib/checkers", name+".cpp"))
+	})
 }
 
 // NewCheckerFromProblem creates a checker from a problem.
 func NewCheckerFromProblem(problem *Problem, rev [20]byte, path string) *Checker {
-	return NewChecker(func() (io.ReadCloser, error) { return problem.File(path, rev) })
+	return NewChecker(func() (io.ReadCloser, error) { return problem.File(rev, path) })
 }
 
 // NewCheckerFromBytes creates a checker from the source code.

@@ -29,7 +29,7 @@ func NewValidator(getSource func() (io.ReadCloser, error)) *Validator {
 
 // NewValidatorFromProblem creates a validator from a problem.
 func NewValidatorFromProblem(problem *Problem, rev [20]byte, path string) *Validator {
-	return NewValidator(func() (io.ReadCloser, error) { return problem.File(path, rev) })
+	return NewValidator(func() (io.ReadCloser, error) { return problem.File(rev, path) })
 }
 
 // NewValidatorFromBytes creates a validator from the source code.
@@ -79,10 +79,13 @@ func (v *Validator) CompileTask(cb judge.CallbackFunction) (*judge.Task, error) 
 
 // ValidateTask needs a validator binary file ID and an input file which will be validated.
 // Returns a judge task to run the validator.
-func (v *Validator) ValidateTask(inf *pb.Request_File, cb judge.CallbackFunction) *judge.Task {
+func (v *Validator) ValidateTask(
+	inf *pb.Request_File, args []string, cb judge.CallbackFunction,
+) *judge.Task {
 	conf := &etc.Config.Validator
 	return judge.DefaultTask().
 		WithCmd("validator").
+		WithCmd(args...).
 		WithTimeLimit(conf.Run.TimeLimit).
 		WithMemoryLimit(conf.Run.MemoryLimit).
 		WithStderrLimit(conf.Run.StderrLimit).

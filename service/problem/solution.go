@@ -32,7 +32,7 @@ func NewSolution(getSource func() (io.ReadCloser, error)) *Solution {
 
 // NewSolutionFromProblem creates a solution from a problem.
 func NewSolutionFromProblem(problem *Problem, rev [20]byte, path string) *Solution {
-	return NewSolution(func() (io.ReadCloser, error) { return problem.File(path, rev) })
+	return NewSolution(func() (io.ReadCloser, error) { return problem.File(rev, path) })
 }
 
 // NewSolutionFromBytes creates a solution from the source code.
@@ -76,4 +76,23 @@ func (s *Solution) CompileTask(cb judge.CallbackFunction) (*judge.Task, error) {
 			}
 			return cb(r, err)
 		}), nil
+}
+
+// ValidateTask needs a validator binary file ID and an input file which will be validated.
+// Returns a judge task to run the validator.
+func (s *Solution) RunTask(
+	timeLimit uint64,
+	memoryLimit uint64,
+	inf *pb.Request_File,
+	args []string,
+	cb judge.CallbackFunction,
+) *judge.Task {
+	return judge.DefaultTask().
+		WithCmd("sol").
+		WithCmd(args...).
+		WithTimeLimit(timeLimit).
+		WithMemoryLimit(memoryLimit).
+		WithStdinFile(inf).
+		WithCopyInCached("sol", s.binaryID).
+		WithCallback(cb)
 }

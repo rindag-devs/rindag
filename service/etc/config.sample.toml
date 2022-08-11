@@ -168,39 +168,43 @@ checker: "lcmp"
 #    path: "solutions/std.cpp"
 #    accepts: ["sample", "main"]
 #  bf1:
-#    path: "solutions/bf1"
+#    path: "solutions/bf1.cpp"
 #    accepts: []
 
 # standard_solution is the name of the main correct solution.
 # If a solution is the standard solution, it should be marked as accepted for all test groups.
 #standard_solution: "std"
 
-# fixed_tests is a list of names and paths to problem fixed tests.
-# You can call these names later in the "TestGroups" section.
+# fixed_tests is a list of names and paths of fixed test cases.
+# You can call these by name later in the "test_groups" section.
 #fixed_tests:
-#  hand_1: "tests/hand_1.in"
+#  hand_1:
+#    inf: "tests/hand_1.in" # input file
+#    # If the output file is not given, it will be generated from the standard solution
+#    # and it's recommended to omit the output file.
 
 # test_groups are test groups of the problem.
 #test_groups:
 #  # "sample" is the name of test group
 #  sample:
 #    full_score: 0
+#    time_limit: 1000000000
+#    memory_limit: 134217728
 #    tests:
 #      # A sample for a fixed test.
-#      - inf:
-#          name: "hand_1"
+#      - fixed: "hand_1"
 #        is_sample: true
 #        disable: true
 #      # A sample for a generated test.
-#      - inf:
-#          generator: "rnd"
-#          extra_args: ["-n", "5", "-m", "5"] # ./rnd --group sample -n 5 -m 5
+#      - generator: "rnd"
+#        extra_args: ["-n", "5", "-m", "5"] # ./rnd --group sample -n 5 -m 5
 #        is_sample: true
 #  main:
 #    depends: ["sample"]
 #    full_score: 100
+#    time_limit: 1000000000
+#    memory_limit: 134217728
 #    tests:
-#      - inf:
-#          generator: "rnd"
-#          extra_args: ["-n", "100", "-m", "100"] # ./rnd --group main -n 100 -m 100
+#      - generator: "rnd"
+#        extra_args: ["-n", "100", "-m", "100"] # ./rnd --group main -n 100 -m 100
 '''

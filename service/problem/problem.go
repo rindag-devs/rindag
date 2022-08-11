@@ -29,7 +29,7 @@ func NewProblem(id uuid.UUID) *Problem {
 }
 
 // File returns a ReadCloser of the file of the problem.
-func (p *Problem) File(path string, rev [20]byte) (io.ReadCloser, error) {
+func (p *Problem) File(rev [20]byte, path string) (io.ReadCloser, error) {
 	repo, err := p.Repo()
 	if err != nil {
 		return nil, err

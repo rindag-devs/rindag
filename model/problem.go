@@ -8,9 +8,10 @@ import (
 
 // Problem represents a problem in database.
 type Problem struct {
-	ID   uuid.UUID      `gorm:"primary_key;type:uuid;default:uuid_generate_v4()" json:"id"`
-	Name string         `gorm:"not null" json:"name"`
-	Tags pq.StringArray `gorm:"not null;type:text[]" json:"tags"`
+	ID           uuid.UUID      `gorm:"primary_key;type:uuid;default:uuid_generate_v4()" json:"id"`
+	Name         string         `gorm:"not null" json:"name"`
+	Tags         pq.StringArray `gorm:"not null;type:text[]" json:"tags"`
+	LastBuildRev *string        `json:"last_build_rev"`
 }
 
 // GetProblemIDsList returns a list of IDs of all problem.

@@ -29,7 +29,7 @@ func NewGenerator(getSource func() (io.ReadCloser, error)) *Generator {
 
 // NewGeneratorFromProblem creates a generator from a problem.
 func NewGeneratorFromProblem(problem *Problem, rev [20]byte, path string) *Generator {
-	return NewGenerator(func() (io.ReadCloser, error) { return problem.File(path, rev) })
+	return NewGenerator(func() (io.ReadCloser, error) { return problem.File(rev, path) })
 }
 
 // NewGeneratorFromBytes creates a generator from the source code.
@@ -80,9 +80,9 @@ func (g *Generator) CompileTask(cb judge.CallbackFunction) (*judge.Task, error) 
 // GenerateTask returns a judge task to run this generator.
 func (g *Generator) GenerateTask(args []string, cb judge.CallbackFunction) *judge.Task {
 	conf := &etc.Config.Generator
-	generateCmd := append([]string{"generator"}, args...)
 	return judge.DefaultTask().
-		WithCmd(generateCmd...).
+		WithCmd("generator").
+		WithCmd(args...).
 		WithTimeLimit(conf.Run.TimeLimit).
 		WithMemoryLimit(conf.Run.MemoryLimit).
 		WithStderrLimit(conf.Run.StderrLimit).

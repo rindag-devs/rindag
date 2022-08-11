@@ -40,18 +40,21 @@ type Config struct {
 	// If a solution is the standard solution, it should be marked as accepted for all test groups.
 	StandardSolution string `yaml:"standard_solution" json:"standard_solution"`
 
-	// FixedTests is a list of names and paths to problem fixed tests.
+	// fixed_tests is a list of names and paths of fixed test cases.
 	//
-	// You can call these names later in the "TestGroups" section.
-	FixedTests map[string]string `yaml:"fixed_tests" json:"fixed_tests"`
+	// You can call these by name later in the "TestGroups" section.
+	FixedTests map[string]struct {
+		Inf string `yaml:"inf" json:"inf"`
+		Ans string `yaml:"ans" json:"ans"`
+	} `yaml:"fixed_tests" json:"fixed_tests"`
 
 	// TestGroups are test groups of the problem.
-	TestGroups map[string]TestGroup `yaml:"test_groups" json:"test_groups"`
+	TestGroups map[string]TestGroupConfig `yaml:"test_groups" json:"test_groups"`
 }
 
 // GetConfig returns a configuration of a problem.
 func (p *Problem) GetConfig(rev [20]byte) (*Config, error) {
-	confReader, err := p.File("config.yaml", rev)
+	confReader, err := p.File(rev, "config.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -62,4 +65,52 @@ func (p *Problem) GetConfig(rev [20]byte) (*Config, error) {
 	}
 
 	return &conf, nil
+}
+
+// TestGroupConfig is a config of test group.
+type TestGroupConfig struct {
+	// Depends is a list of names of test groups that this group depends on.
+	Depends []string `yaml:"depends" json:"depends"`
+
+	// FullScore is the score of this group.
+	//
+	// patient's score = FullScore *
+	//   min(min_{s \in dependencies} Score(s) / FullScore(s), min_{t \in tests} score(t) / 100)
+	FullScore int `yaml:"full_score" json:"full_score"`
+
+	// TimeLimit is the time limit in nanoseconds of this group.
+	TimeLimit uint64 `yaml:"time_limit" json:"time_limit"`
+
+	// MemoryLimit is the memory limit in bytes of this group.
+	MemoryLimit uint64 `yaml:"memory_limit" json:"memory_limit"`
+
+	// Tests is a list of test cases in the group.
+	Tests []TestCaseConfig `yaml:"tests" json:"tests"`
+}
+
+// TestCaseConfig is a config of test case.
+type TestCaseConfig struct {
+	// Fixed is the name of the fixed test case.
+	//
+	// It is used when the test case is fixed.
+	Fixed string `yaml:"fixed,omitempty" json:"fixed,omitempty"`
+
+	// Generator is the generator of the input.
+	//
+	// It is used when the test case is generated.
+	Generator string `yaml:"generator,omitempty" json:"generator,omitempty"`
+
+	// ExtraArgs is the extra arguments of the generator.
+	//
+	// It is used when the test case is generated.
+	ExtraArgs []string `yaml:"extra_args,omitempty" json:"extra_args,omitempty"`
+
+	// IsSample is true if the test case is a sample.
+	IsSample bool `yaml:"is_sample" json:"is_sample"`
+
+	// Disable is true if this test is not contained in the test case.
+	//
+	// For example, you can use a test case with "IsSample" and "NoTest" to describe the rules
+	// for interactive problems.
+	Disable bool `yaml:"disable" json:"disable"`
 }

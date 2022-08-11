@@ -58,17 +58,17 @@ func ParseTestlibOutput(output string, fullScore int64) (
 		}
 		return s[:MaxTestlibMessageLen-3] + "..."
 	}
-	if result := regexp.MustCompile(`^ok (.*)$`).FindStringSubmatch(output); result != nil {
+	if result := regexp.MustCompile(`(?s)\Aok (.*)\z`).FindStringSubmatch(output); result != nil {
 		status, builder = accepted()
 		score = fullScore
 		message = result[1]
-	} else if result := regexp.MustCompile(`^wrong answer (.*)$`).FindStringSubmatch(output); result != nil {
+	} else if result := regexp.MustCompile(`(?s)\Awrong answer (.*)\z`).FindStringSubmatch(output); result != nil {
 		status, builder = wrongAnswer()
 		message = result[1]
-	} else if result := regexp.MustCompile(`^wrong output format (.*)$`).FindStringSubmatch(output); result != nil {
+	} else if result := regexp.MustCompile(`(?s)\Awrong output format (.*)\z`).FindStringSubmatch(output); result != nil {
 		status, builder = formatError()
 		message = result[1]
-	} else if result := regexp.MustCompile(`^(?:partially correct|points) \(?([0-9.]*)\)? (.*)$`).
+	} else if result := regexp.MustCompile(`(?s)\A(?:partially correct|points) \(?([0-9.]*)\)? (.*)\z`).
 		FindStringSubmatch(output); result != nil {
 		p, _ := strconv.ParseFloat(result[1], 64)
 		if p >= 1 {
