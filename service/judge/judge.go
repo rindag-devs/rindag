@@ -53,10 +53,10 @@ func (j *Judge) processSingleTask(
 	pbr := task.ToPbRequest()
 	result, err := j.execClient.Exec(ctx, pbr)
 	if err != nil || len(result.Results) == 0 {
-		// Failed to execute
+		// Failed to execute.
 		select {
 		case <-parentCtx.Done():
-			// If the parent context is cancelled, do nothing
+			// If the parent context is cancelled, do nothing.
 		default:
 			parentCancel()
 			log.WithField("task", task.ID).WithError(err).Error("Failed to execute")

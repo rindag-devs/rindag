@@ -13,15 +13,11 @@ host = "localhost:6379"
 password = ""
 db = 0
 
-[storage]
-type = "minio"
-
-[storage.minio]
+[minio]
 endpoint = "localhost:9000"
 access_key_id = "minio"
 secret_access_key = "minio123"
-use_ssl = true
-bucket = "rindag"
+use_ssl = false
 
 [git]
 repo_dir = "/var/lib/rindag/git/"

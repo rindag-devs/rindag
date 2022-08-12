@@ -35,21 +35,12 @@ type Configuration struct {
 		} `mapstructure:"redis"`
 	} `mapstructure:"database"`
 
-	Storage struct {
-		// Type is the type of storage (local or minio).
-		Type  string `mapstructure:"type"`
-		Local struct {
-			// Path is the path to the storage directory.
-			Path string `mapstructure:"path"`
-		} `mapstructure:"local"`
-		MinIO struct {
-			Endpoint        string `mapstructure:"endpoint"`
-			AccessKeyID     string `mapstructure:"access_key_id"`
-			SecretAccessKey string `mapstructure:"secret_access_key"`
-			UseSSL          bool   `mapstructure:"use_ssl"`
-			Bucket          string `mapstructure:"bucket"`
-		} `mapstructure:"minio"`
-	} `mapstructure:"storage"`
+	MinIO struct {
+		Endpoint        string `mapstructure:"endpoint"`
+		AccessKeyID     string `mapstructure:"access_key_id"`
+		SecretAccessKey string `mapstructure:"secret_access_key"`
+		UseSSL          bool   `mapstructure:"use_ssl"`
+	} `mapstructure:"minio"`
 
 	Git struct {
 		// RepoDir is the path to the git repositories.

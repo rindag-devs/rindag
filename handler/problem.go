@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"rindag/model"
@@ -20,7 +19,7 @@ import (
 // @accept      json
 // @produce     json
 // @success     200 {object} any{problems=[]model.Problem}
-// @failure     500             {object} any{error=string}
+// @failure     500 {object} any{error=string}
 // @security    ApiKeyAuth
 // @router      /problem [get]
 func HandleProblemList(c *gin.Context) {
@@ -73,11 +72,11 @@ func HandleProblemAdd(c *gin.Context) {
 // @description Get a problem's configuration. If the revision is not specified, it will use HEAD.
 // @tags        problem
 // @produce     json
-// @param       id              path     string          true "Problem ID"
+// @param       id  path     string true   "Problem ID"
 // @param       rev string   query  string false "Commit hash"
 // @success     200 {object} problem.Config
-// @failure     400             {object} any{error=string}
-// @failure     404             {object} any{error=string}
+// @failure     400 {object} any{error=string}
+// @failure     404 {object} any{error=string}
 // @failure     500 {object} any{error=string}
 // @security    ApiKeyAuth
 // @router      /problem/{id}/config [get]
@@ -124,19 +123,20 @@ func HandleProblemConfigGet(c *gin.Context) {
 }
 
 type problemBuildReq struct {
-	Rev string `json:"rev" default:"HEAD"`
+	Rev  string `json:"rev" default:"HEAD"`
+	Save bool   `json:"save"`
 }
 
 // @summary     ProblemBuild
 // @description Build a problem.
 // @tags        problem
 // @produce     json
-// @param       id  path     string true   "Problem ID"
+// @param       id              path     string          true "Problem ID"
 // @param       problemBuildReq body     problemBuildReq true "Problem build request"
 // @success     200             {object} any{build=problem.BuildInfo}
-// @failure     400 {object} any{error=string}
-// @failure     404 {object} any{error=string}
-// @failure     500 {object} any{error=string}
+// @failure     400             {object} any{error=string}
+// @failure     404             {object} any{error=string}
+// @failure     500             {object} any{error=string}
 // @security    ApiKeyAuth
 // @router      /problem/{id}/build [post]
 func HandleProblemBuild(c *gin.Context) {
@@ -177,12 +177,30 @@ func HandleProblemBuild(c *gin.Context) {
 		return
 	}
 
-	info := problem.Build(*hash)
-	log.Debugf("info: %v", info)
-	d, err := json.MarshalIndent(info, "", "  ")
-	if err != nil {
-		log.Fatal(err)
+	info, fs := problem.Build(*hash)
+
+	if !params.Save {
+		c.JSON(http.StatusOK, info)
+		return
 	}
-	log.Debugf("json: %v", string(d))
+
+	// Save problem build info to database and storage its input and answer files.
+	if _, err := model.UpdateBuildInfo(db.PDB, problem.ID, *hash, *info); err != nil {
+		log.WithError(err).Error("failed to create build info")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create build info"})
+		return
+	}
+
+	if !info.OK {
+		c.JSON(http.StatusOK, info)
+		return
+	}
+
+	if err := problem.StorageSave(info.Generate.TestGroups, fs); err != nil {
+		log.WithError(err).Error("failed to save problem build files")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save problem build files"})
+		return
+	}
+
 	c.JSON(http.StatusOK, info)
 }

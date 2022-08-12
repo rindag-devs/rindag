@@ -2,6 +2,8 @@ package problem
 
 import (
 	"context"
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,6 +14,7 @@ import (
 	"github.com/criyle/go-judge/pb"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -97,6 +100,22 @@ type BuildInfo struct {
 	Generate *GenerateInfo `json:"generate,omitempty"`
 	Validate *ValidateInfo `json:"validate,omitempty"`
 	Check    *CheckInfo    `json:"check,omitempty"`
+}
+
+func (b *BuildInfo) Scan(value any) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.Errorf("Failed to unmarshal JSONB value:", value)
+	}
+
+	result := BuildInfo{}
+	err := json.Unmarshal(bytes, &result)
+	*b = result
+	return err
+}
+
+func (b BuildInfo) Value() (driver.Value, error) {
+	return json.Marshal(b)
 }
 
 // BuildParse is a function to execute the parsing part of build.
@@ -244,7 +263,9 @@ func getTestCasePathPrefix(group string, idx int) string {
 // 3. For all test data, if its output is fixed, copy it from problem repo;
 //    otherwise, use the standard solution to generate it.
 // 4. Create a memory file system with the input data.
-func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, billy.Filesystem) {
+func (p *Problem) BuildGenerate(
+	rev [20]byte, conf *Config, fs billy.Filesystem,
+) *GenerateInfo {
 	type compileResponse struct {
 		Name   string
 		Result *RunResult
@@ -283,7 +304,7 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 			return &GenerateInfo{
 				OK:  false,
 				Err: fmt.Sprintf("failed to get compile task for generator '%s': %s", name, err),
-			}, nil
+			}
 		}
 
 		generatorCompileWG.Add(1)
@@ -319,8 +340,6 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 	info := &GenerateInfo{OK: true}
 	info.TestGroups = make(map[string]*TestGroup)
 
-	fs := memfs.New()
-
 	for groupName, group := range conf.TestGroups {
 		info.TestGroups[groupName] = &TestGroup{
 			Depends:     group.Depends,
@@ -349,7 +368,7 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 					return &GenerateInfo{
 						OK:  false,
 						Err: fmt.Sprintf("failed to create fixed input file '%s': %s", infPath, err),
-					}, nil
+					}
 				}
 
 				source, err := p.File(rev, conf.FixedTests[test.Fixed].Inf)
@@ -357,7 +376,7 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 					return &GenerateInfo{
 						OK:  false,
 						Err: fmt.Sprintf("failed to get source of fixed input '%s': %s", infPath, err),
-					}, nil
+					}
 				}
 
 				infContent, err := ioutil.ReadAll(source)
@@ -365,14 +384,14 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 					return &GenerateInfo{
 						OK:  false,
 						Err: fmt.Sprintf("failed to read content of fixed input '%s': %s", infPath, err),
-					}, nil
+					}
 				}
 
 				if _, err := memFile.Write(infContent); err != nil {
 					return &GenerateInfo{
 						OK:  false,
 						Err: fmt.Sprintf("failed to copy fixed input '%s': %s", infPath, err),
-					}, nil
+					}
 				}
 
 				testCase.InfFrom = []string{conf.FixedTests[test.Fixed].Inf}
@@ -423,7 +442,7 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 					return &GenerateInfo{
 						OK:  false,
 						Err: fmt.Sprintf("failed to create fixed answer '%s': %s", ansPath, err),
-					}, nil
+					}
 				}
 
 				source, err := p.File(rev, conf.FixedTests[test.Fixed].Ans)
@@ -431,14 +450,14 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 					return &GenerateInfo{
 						OK:  false,
 						Err: fmt.Sprintf("failed to get source of fixed answer '%s': %s", ansPath, err),
-					}, nil
+					}
 				}
 
 				if _, err := io.Copy(memFile, source); err != nil {
 					return &GenerateInfo{
 						OK:  false,
 						Err: fmt.Sprintf("failed to copy fixed answer '%s': %s", ansPath, err),
-					}, nil
+					}
 				}
 
 				testCase.AnsFrom = []string{conf.FixedTests[test.Fixed].Ans}
@@ -488,7 +507,7 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 		return &GenerateInfo{
 			OK:  false,
 			Err: fmt.Sprintf("failed to get idle judge: %s", err),
-		}, nil
+		}
 	}
 
 	j.AddRequest(judge.NewRequest(context.Background()).
@@ -510,14 +529,14 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 	}
 
 	if !info.OK {
-		return info, nil
+		return info
 	}
 
 	info.StdCompileResult = <-stdCompileResponses
 	if !info.StdCompileResult.Finished {
 		info.OK = false
 		info.Err = fmt.Sprintf("failed to compile standard solution: %s", info.StdCompileResult.Err)
-		return info, nil
+		return info
 	}
 
 	info.GenerateResults = make(map[string]*RunResult)
@@ -556,7 +575,7 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 	}
 
 	if !info.OK {
-		return info, nil
+		return info
 	}
 
 	info.StdRunResults = make(map[string]*RunResult)
@@ -595,10 +614,10 @@ func (p *Problem) BuildGenerate(rev [20]byte, conf *Config) (*GenerateInfo, bill
 	}
 
 	if !info.OK {
-		return info, nil
+		return info
 	}
 
-	return info, fs
+	return info
 }
 
 // BuildValidate is a function to execute the validate part of build.
@@ -658,8 +677,6 @@ func (p *Problem) BuildValidate(
 					Err: fmt.Sprintf("failed to read test case input '%s': %s", infPath, err),
 				}
 			}
-
-			log.Debugf("infPath: %s, infData: %s", infPath, string(inputData))
 
 			// Validated test case.
 			validatorArgs := []string{"--group", groupName}
@@ -905,7 +922,6 @@ func (p *Problem) BuildCheck(
 	info.SolutionCompileResults = make(map[string]*RunResult)
 
 	for resp := range solutionCompileResponses {
-		log.Debugf("compile response: %+v", resp)
 		info.SolutionCompileResults[resp.Name] = resp.Result
 
 		if !resp.Result.Finished {
@@ -1036,7 +1052,6 @@ func (p *Problem) BuildCheck(
 		}
 		chkMsg := string(resp.Result.Stderr)
 		status, _, msg := ParseTestlibOutput(chkMsg, 100)
-		log.WithField("chkMsg", chkMsg).WithField("status", status).WithField("msg", msg).Debug("checker output")
 		info.JudgeResults[resp.Solution][resp.TestCase].Status = status
 		info.JudgeResults[resp.Solution][resp.TestCase].CheckerResult = msg
 
@@ -1081,7 +1096,7 @@ func (p *Problem) BuildCheck(
 }
 
 // Build builds problem.
-func (p *Problem) Build(rev [20]byte) *BuildInfo {
+func (p *Problem) Build(rev [20]byte) (*BuildInfo, billy.Filesystem) {
 	result := &BuildInfo{
 		OK:       false,
 		Parse:    nil,
@@ -1093,28 +1108,28 @@ func (p *Problem) Build(rev [20]byte) *BuildInfo {
 	result.Parse = p.BuildParse(rev)
 	log.Debugf("build parse: %v", result.Parse)
 	if !result.Parse.OK {
-		return result
+		return result, nil
 	}
 
-	var fs billy.Filesystem
-	result.Generate, fs = p.BuildGenerate(rev, result.Parse.Config)
+	fs := memfs.New()
+	result.Generate = p.BuildGenerate(rev, result.Parse.Config, fs)
 	log.Debugf("build generate: %v", result.Generate)
 	if !result.Generate.OK {
-		return result
+		return result, nil
 	}
 
 	result.Validate = p.BuildValidate(rev, result.Parse.Config, result.Generate.TestGroups, fs)
 	log.Debugf("build validate: %v", result.Validate)
 	if !result.Validate.OK {
-		return result
+		return result, nil
 	}
 
 	result.Check = p.BuildCheck(rev, result.Parse.Config, result.Generate.TestGroups, fs)
 	log.Debugf("build check: %v", result.Check)
 	if !result.Check.OK {
-		return result
+		return result, nil
 	}
 
 	result.OK = true
-	return result
+	return result, fs
 }
