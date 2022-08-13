@@ -7,9 +7,9 @@ import (
 
 const (
 	DefaultTimeLimit   = 5 * 1000 * 1000 * 1000 // 5 second
-	DefaultMemoryLimit = 256 * 1024 * 1024      // 256 MB
+	DefaultMemoryLimit = 256 * 1024 * 1024      // 256 MiB
 	DefaultProcLimit   = 16                     // 16 processes
-	DefaultStdoutLimit = 256 * 1024 * 1024      // 256 MB
+	DefaultStdoutLimit = 256 * 1024 * 1024      // 256 MiB
 	DefaultStderrLimit = 10 * 1024              // 10 kB
 )
 
@@ -85,7 +85,8 @@ func DefaultTask() *Task {
 		StderrLimit: DefaultStderrLimit,
 		Env:         DefaultEnv,
 		Stdin: &pb.Request_File{
-			File: &pb.Request_File_Memory{Memory: &pb.Request_MemoryFile{Content: []byte{}}}},
+			File: &pb.Request_File_Memory{Memory: &pb.Request_MemoryFile{Content: []byte{}}},
+		},
 		StdinCached:  nil,
 		CopyIn:       map[string]*pb.Request_File{},
 		CopyInCached: map[string]*string{},
@@ -135,7 +136,8 @@ func (t *Task) WithEnv(env ...string) *Task {
 // WithStdin sets the input data.
 func (t *Task) WithStdin(stdin []byte) *Task {
 	t.Stdin = &pb.Request_File{
-		File: &pb.Request_File_Memory{Memory: &pb.Request_MemoryFile{Content: stdin}}}
+		File: &pb.Request_File_Memory{Memory: &pb.Request_MemoryFile{Content: stdin}},
+	}
 	return t
 }
 
@@ -154,7 +156,8 @@ func (t *Task) WithStdinFile(file *pb.Request_File) *Task {
 // WithCopyIn adds the files to be copied in.
 func (t *Task) WithCopyIn(path string, data []byte) *Task {
 	t.CopyIn[path] = &pb.Request_File{
-		File: &pb.Request_File_Memory{Memory: &pb.Request_MemoryFile{Content: data}}}
+		File: &pb.Request_File_Memory{Memory: &pb.Request_MemoryFile{Content: data}},
+	}
 	return t
 }
 
@@ -187,7 +190,8 @@ func (t *Task) ToPbRequest() *pb.Request {
 	stdin := t.Stdin
 	if t.StdinCached != nil {
 		stdin = &pb.Request_File{
-			File: &pb.Request_File_Cached{Cached: &pb.Request_CachedFile{FileID: *t.StdinCached}}}
+			File: &pb.Request_File_Cached{Cached: &pb.Request_CachedFile{FileID: *t.StdinCached}},
+		}
 	}
 	appendedCopyOut := make([]*pb.Request_CmdCopyOutFile, len(t.CopyOut))
 	for i, f := range t.CopyOut {

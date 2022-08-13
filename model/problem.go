@@ -11,7 +11,7 @@ type Problem struct {
 	ID           uuid.UUID      `gorm:"primary_key;type:uuid;default:uuid_generate_v4()" json:"id"`
 	Name         string         `gorm:"not null" json:"name"`
 	Tags         pq.StringArray `gorm:"not null;type:text[]" json:"tags"`
-	LastBuildRev *string        `json:"last_build_rev"`
+	LastBuildRev []byte         `gorm:"not null;default:decode('00000000000000000000','hex')" json:"last_build_rev"`
 }
 
 // GetProblemIDsList returns a list of IDs of all problem.

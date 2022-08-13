@@ -66,6 +66,7 @@ func setupRouter() *gin.Engine {
 			problem.POST("/", handler.HandleProblemAdd)
 			problem.GET("/:id/config", handler.HandleProblemConfigGet)
 			problem.POST("/:id/build", handler.HandleProblemBuild)
+			problem.GET("/:id/package", handler.HandleProblemPackage)
 		}
 	}
 

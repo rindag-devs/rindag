@@ -155,7 +155,8 @@ func HandleProblemBuild(c *gin.Context) {
 		return
 	}
 
-	if _, err := model.GetProblemByID(db.PDB, id); err != nil {
+	mp, err := model.GetProblemByID(db.PDB, id)
+	if err != nil {
 		log.WithError(err).Error("failed to get problem")
 		c.JSON(http.StatusNotFound, gin.H{"error": "failed to get problem"})
 		return
@@ -185,7 +186,7 @@ func HandleProblemBuild(c *gin.Context) {
 	}
 
 	// Save problem build info to database and storage its input and answer files.
-	if _, err := model.UpdateBuildInfo(db.PDB, problem.ID, *hash, *info); err != nil {
+	if _, err := model.UpdateBuildInfo(db.PDB, mp, *hash, *info); err != nil {
 		log.WithError(err).Error("failed to create build info")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create build info"})
 		return
@@ -203,4 +204,62 @@ func HandleProblemBuild(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, info)
+}
+
+// @summary     ProblemPackage
+// @description Package a problem.
+// @tags        problem
+// @produce     application/zip
+// @param       id     path     string true "Problem ID"
+// @param       format query    string true "Package format"
+// @param       lang   query    string false "Package format"
+// @success     200    {object} any
+// @failure     400    {object} any{error=string}
+// @failure     404    {object} any{error=string}
+// @failure     500    {object} any{error=string}
+// @security    ApiKeyAuth
+// @router      /problem/{id}/package [get]
+func HandleProblemPackage(c *gin.Context) {
+	idStr := c.Param("id")
+	format, ok := c.GetQuery("format")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid format"})
+		return
+	}
+	lang := c.DefaultQuery("lang", "en")
+
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	mp, err := model.GetProblemByID(db.PDB, id)
+	if err != nil {
+		log.WithError(err).Error("failed to get problem")
+		c.JSON(http.StatusNotFound, gin.H{"error": "failed to get problem"})
+		return
+	}
+
+	problem := problem.NewProblem(id)
+	var rev [20]byte
+	copy(rev[:], mp.LastBuildRev[0:20])
+
+	info, err := model.GetBuildInfo(db.PDB, mp, rev)
+	if err != nil {
+		log.WithError(err).Error("failed to get build info")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get build info"})
+		return
+	}
+
+	if !info.Info.Generate.OK {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "last build failed"})
+		return
+	}
+
+	if err := problem.Package(format, lang, info.Info.Generate.TestGroups, c.Writer); err != nil {
+		log.WithError(err).Error("failed to package problem")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to package problem"})
+		return
+	}
 }

@@ -76,7 +76,7 @@ type TestGroupConfig struct {
 	//
 	// patient's score = FullScore *
 	//   min(min_{s \in dependencies} Score(s) / FullScore(s), min_{t \in tests} score(t) / 100)
-	FullScore int `yaml:"full_score" json:"full_score"`
+	FullScore int32 `yaml:"full_score" json:"full_score"`
 
 	// TimeLimit is the time limit in nanoseconds of this group.
 	TimeLimit uint64 `yaml:"time_limit" json:"time_limit"`

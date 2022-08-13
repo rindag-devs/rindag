@@ -24,12 +24,23 @@ type BuildInfo struct {
 	Info problem.BuildInfo `gorm:"not null"`
 }
 
+// GetBuildInfo returns the build information of the problem and revision.
+func GetBuildInfo(db *gorm.DB, problem *Problem, rev [20]byte) (*BuildInfo, error) {
+	var buildInfo BuildInfo
+	err := db.Where("problem = ? AND rev = ?", problem.ID, rev[:]).First(&buildInfo).Error
+	return &buildInfo, err
+}
+
 // UpdateBuildInfo creates a new build information.
 func UpdateBuildInfo(
-	db *gorm.DB, problem uuid.UUID, rev [20]byte, info problem.BuildInfo,
+	db *gorm.DB, problem *Problem, rev [20]byte, info problem.BuildInfo,
 ) (*BuildInfo, error) {
+	problem.LastBuildRev = rev[:]
+	if err := db.Save(problem).Error; err != nil {
+		return nil, err
+	}
 	buildInfo := &BuildInfo{
-		Problem:   problem,
+		Problem:   problem.ID,
 		Rev:       rev[:],
 		BuildTime: time.Now(),
 		Info:      info,
