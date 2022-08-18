@@ -61,7 +61,7 @@ func setupPostgres() {
 func setupRedis() {
 	conf := etc.Config.Database.Redis
 	RDB = redis.NewClient(&redis.Options{
-		Addr:     conf.Host,
+		Addr:     conf.Addr,
 		Password: conf.Password,
 		DB:       conf.DB,
 	})

@@ -1,5 +1,7 @@
 log_level = "debug"
 
+addr = ":8080"
+
 [database.postgres]
 host = "localhost"
 port = 5432
@@ -9,7 +11,7 @@ dbname = "rindag"
 use_ssl = false
 
 [database.redis]
-host = "localhost:6379"
+addr = "localhost:6379"
 password = ""
 db = 0
 

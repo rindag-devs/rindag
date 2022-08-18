@@ -19,6 +19,9 @@ var DefaultConfig []byte
 type Configuration struct {
 	LogLevel string `mapstructure:"log_level"`
 
+	// Addr is the address for the rindag http server to listen on.
+	Addr string `mapstructure:"addr"`
+
 	Database struct {
 		Postgres struct {
 			Host     string `mapstructure:"host"`
@@ -29,7 +32,7 @@ type Configuration struct {
 			UseSSL   bool   `mapstructure:"use_ssl"`
 		} `mapstructure:"postgres"`
 		Redis struct {
-			Host     string `mapstructure:"host"`
+			Addr     string `mapstructure:"addr"`
 			Password string `mapstructure:"password"`
 			DB       int    `mapstructure:"db"`
 		} `mapstructure:"redis"`

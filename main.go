@@ -11,6 +11,7 @@ import (
 	_ "rindag/docs"
 	"rindag/handler"
 	"rindag/middleware"
+	"rindag/service/etc"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -78,7 +79,7 @@ func setupRouter() *gin.Engine {
 func main() {
 	router := setupRouter()
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    etc.Config.Addr,
 		Handler: router,
 	}
 
